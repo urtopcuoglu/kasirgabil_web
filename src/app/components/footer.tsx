@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import Image from 'next/image';
-import { Phone } from 'lucide-react';
+import { Phone, Mail, MapPin, Linkedin, Instagram } from 'lucide-react';
 
 const Footer = () => {
     return (
@@ -34,12 +34,12 @@ const Footer = () => {
 
             {/* Main Footer Links */}
             <div className="container mx-auto py-12 px-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
                     {/* Logo */}
                     <div className="col-span-2 md:col-span-1 flex justify-center md:justify-start items-center">
                         <div className="relative w-40 h-12">
                             <Image
-                                src="/logo/logo.png" // Buraya logo dosyanızın yolunu yazın
+                                src="/logo/logo.png"
                                 alt="Kasırga Bilgisayar Logo"
                                 layout="fill"
                                 objectFit="contain"
@@ -51,9 +51,29 @@ const Footer = () => {
                     <div>
                         <h4 className="font-bold text-lg mb-4">Kurumsal</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</a></li>
-                            <li><a href="../public/contact" className="hover:text-[var(--color-primary)] transition-colors">Ürünlerimiz</a></li>
-                            <li><a href="../public/products" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a></li>
+                            <li>
+                                <a href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</a>
+                            </li>
+                            <li>
+                                <a href="../public/contact" className="hover:text-[var(--color-primary)] transition-colors">Ürünlerimiz</a>
+                            </li>
+                            <li>
+                                <a href="../public/products" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Çalışma Saatlerimiz */}
+                    <div>
+                        <h4 className="font-bold text-lg mb-4">Çalışma Saatlerimiz</h4>
+                        <ul className="space-y-2 text-sm">
+                            <li>Pazartesi: 09:30 - 18:00</li>
+                            <li>Salı: 09:30 - 18:00</li>
+                            <li>Çarşamba: 09:30 - 18:00</li>
+                            <li>Perşembe: 09:30 - 18:00</li>
+                            <li>Cuma: 09:30 - 18:00</li>
+                            <li>Cumartesi: 09:30 - 18:00</li>
+                            <li>Pazar: Kapalı</li>
                         </ul>
                     </div>
 
@@ -61,11 +81,18 @@ const Footer = () => {
                     <div>
                         <h4 className="font-bold text-lg mb-4">Alışveriş</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#" className="hover:text-[var(--color-primary)] transition-colors">Mesafeli Satış Sözleşmesi</a></li>
-                            <li><a href="#" className="hover:text-[var(--color-primary)] transition-colors">Gizlilik Politikası</a></li>
-                            <li><a href="#" className="hover:text-[var(--color-primary)] transition-colors">İptal ve İade</a></li>
-                            <li><a href="#" className="hover:text-[var(--color-primary)] transition-colors">Kişisel Veriler Politikası</a></li>
-
+                            <li>
+                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Mesafeli Satış Sözleşmesi</a>
+                            </li>
+                            <li>
+                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Gizlilik Politikası</a>
+                            </li>
+                            <li>
+                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">İptal ve İade</a>
+                            </li>
+                            <li>
+                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Kişisel Veriler Politikası</a>
+                            </li>
                         </ul>
                     </div>
 
@@ -74,19 +101,42 @@ const Footer = () => {
                         <h4 className="font-bold text-lg mb-4">Bize Ulaşın</h4>
                         <ul className="space-y-4 text-sm">
                             <li className="flex items-center space-x-2">
+                                <Phone size={16} className="text-zinc-500" />
                                 <div>
                                     <p className="font-semibold">0 (312) 311 93 39</p>
                                     <p className="font-semibold">0 (505) 387 79 39</p>
                                 </div>
                             </li>
                             <li className="flex items-center space-x-2">
+                                <Mail size={16} className="text-zinc-500" />
                                 <a href="mailto:info@kasirgabilgisayar.com" className="hover:text-[var(--color-primary)] transition-colors">info@kasirgabilgisayar.com</a>
                             </li>
                             <li className="flex items-start space-x-2">
+                                <MapPin size={16} className="text-zinc-500" />
                                 <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya - Ankara</p>
                             </li>
                         </ul>
+
+                        {/* Sosyal Medya İkonları */}
+                        <div className="flex space-x-4 mt-6">
+                            <a href="https://www.linkedin.com/company/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
+                                <Linkedin size={24} />
+                            </a>
+                            <a href="https://www.instagram.com/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
+                                <Instagram size={24} />
+                            </a>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Copyright and Design Section */}
+            <div className="bg-[var(--color-secondary)] text-white py-4 px-4">
+                <div className="container mx-auto text-center md:text-left text-xs flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
+                    <p>&copy; 2025 Kasırga Bilgisayar Tüm Hakları Saklıdır.</p>
+                    <p>
+                        Design by <a href="http://urtopcuoglu.github.io" target="_blank" rel="noopener noreferrer" className="hover:underline">urtdigital</a>
+                    </p>
                 </div>
             </div>
 

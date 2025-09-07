@@ -1,119 +1,174 @@
-"use client"
+"use client";
+import React from "react";
 import Image from "next/image";
-import ImageSection from "./components/ImageSlider";
-import ImageSlider from "./components/ImageSlider";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import { Wrench, ScanBarcode } from 'lucide-react'; // Wrench ikonu eklendi
 
-const images = [
-    'https://images.unsplash.com/photo-1549497259-703358055c5d?q=80&w=2670&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1579546929946-b3378396c21a?q=80&w=2669&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1629747447743-4f964a30e8c0?q=80&w=2670&auto=format&fit=crop',
+import Header from "./components/header";
+import Footer from "./components/footer";
+import ProductCard from "./components/ProductCard";
+import ServiceCard from "./components/ServicesCard";
+
+const sliderImages = [
+    '/slider_image/slider-1.jpg',
+    '/slider_image/slider-2.jpg',
+    '/slider_image/slider-3.jpg',
 ];
+
+
+const productCategories = [
+    {
+        imageSrc: '/product_image/pc-oem.jpg',
+        imageAlt: 'PC OEM Bileşenleri',
+        title: 'PC OEM Ekipmanları',
+        description: 'Masaüstü bilgisayarlarınız için en yeni ve en kaliteli OEM bileşenleri burada.',
+        buttonText: 'Daha Fazla',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/product_image/laptop_1.jpg',
+        imageAlt: 'Laptop Parçaları',
+        title: 'Laptop',
+        description: 'Laptoplarınız için uyumlu ve dayanıklı yedek parçalar ve aksesuarlar.',
+        buttonText: 'Daha Fazla',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/product_image/nbook_yedek.jpg',
+        imageAlt: 'Notebook Yedek Parça',
+        title: 'Notebook Yedek Parça',
+        description: 'Seçili ürünlerde kaçırılmayacak fırsatlar ve büyük indirimler sizi bekliyor.',
+        buttonText: 'İncele',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/product_image/gaming.jpg',
+        imageAlt: 'Gaming PC',
+        title: 'Gaming',
+        description: 'Yüksek performanslı oyun deneyimi için tasarlanmış ekipmanlar.',
+        buttonText: 'Daha Fazla',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/product_image/sunucu_network.jpg',
+        imageAlt: 'Sunucu ve Network Ürünleri',
+        title: 'Sunucu ve Network Ürünleri',
+        description: 'Ofisinizin verimliliğini artıracak son teknoloji ofis ekipmanları.',
+        buttonText: 'Daha Fazla',
+    },
+    {
+        imageSrc: '/product_images/different_products.jpg',
+        imageAlt: 'Değişik Ürünler',
+        title: 'Değişik Ürünler',
+        description: 'Hayatınızı kolaylaştıracak ilginç ve sıradışı teknolojik ürünleri keşfedin.',
+        buttonText: 'Göz At',
+        buttonLink: '#',
+    },
+];
+
+const services = [
+    {
+        imageSrc: '/services/technical-services.jpg',
+        title: 'Tamir ve Bakım',
+        description: 'Cihazlarınız için profesyonel tamir, bakım ve onarım hizmetleri.',
+        buttonText: 'Daha Fazlası',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/services/web-design.jpg',
+        title: 'Yazılım Çözümleri',
+        description: 'İhtiyaçlarınıza özel yazılım geliştirme ve danışmanlık hizmetleri.',
+        buttonText: 'Daha Fazlası',
+        buttonLink: '#',
+    },
+    {
+        imageSrc: '/services/server-network.jpg',
+        title: 'Kurumsal Destek',
+        description: 'İşletmeler için IT altyapı çözümleri ve 7/24 teknik destek.',
+        buttonText: 'Daha Fazlası',
+        buttonLink: '#',
+    },
+];
+
 export default function Home() {
     return (
-        <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-            <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-                <Image
-                    className="dark:invert"
-                    src="/next.svg"
-                    alt="Next.js logo"
-                    width={180}
-                    height={38}
-                    priority
-                />
-                <h1 className="text-4xl font-bold mb-6 text-center" style={{ color: 'var(--color-primary)' }}>
-                    Web Sitemize Hoş Geldiniz
-                </h1>
-                <p className="text-lg text-center mb-8" style={{ color: 'var(--foreground)' }}>
-                    Bu, ana sayfanızdır. Aşağıda resim galerisini görebilirsiniz.
-                </p>
+        <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-800">
+            <main className="flex-1 flex flex-col items-center">
+                <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">
+                    {/* Image Slider Component */}
+                    <div className="w-full max-w-4xl mx-auto relative mb-12">
+                        <Swiper
+                            modules={[Navigation, Pagination]}
+                            spaceBetween={30}
+                            slidesPerView={1}
+                            navigation
+                            pagination={{ clickable: true }}
+                            onSlideChange={() => console.log('slide change')}
+                            onSwiper={(swiper) => console.log(swiper)}
+                            className="mySwiper"
+                        >
+                            {sliderImages.map((image, index) => (
+                                <SwiperSlide key={index}>
+                                    <Image
+                                        src={image}
+                                        alt={`Slider Image ${index + 1}`}
+                                        width={1000}
+                                        height={500}
+                                        layout="responsive"
+                                        objectFit="cover"
+                                        className="rounded-lg shadow-lg"
+                                    />
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
+                    </div>
 
-                <ImageSlider images={images} />
-                <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-                    <li className="mb-2 tracking-[-.01em]">
-                        Get started by editing{" "}
-                        <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-                            src/app/page.tsx
-                        </code>
-                        .
-                    </li>
-                    <li className="tracking-[-.01em]">
-                        Save and see your changes instantly.
-                    </li>
-                </ol>
+                    {/* Product Categories Grid */}
+                    <section className="w-full max-w-6xl mx-auto py-8">
+                        <h2 className="text-3xl font-bold text-center mb-8 text-[var(--color-secondary)] dark:text-white">Ürün Kategorileri</h2>
+                        <ScanBarcode size={32} className="text-[var(--color-secondary)]" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {productCategories.map((card, index) => (
+                                <ProductCard
+                                    key={index}
+                                    imageSrc={card.imageSrc}
+                                    imageAlt={card.imageAlt}
+                                    title={card.title}
+                                    description={card.description}
+                                    buttonText={card.buttonText}
+                                    buttonLink='#'
+                                />
+                            ))}
+                        </div>
+                    </section>
+                </div>
 
-                <div className="flex gap-4 items-center flex-col sm:flex-row">
-                    <a
-                        className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-                        href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <Image
-                            className="dark:invert"
-                            src="/vercel.svg"
-                            alt="Vercel logomark"
-                            width={20}
-                            height={20}
-                        />
-                        Deploy now
-                    </a>
-                    <a
-                        className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-                        href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Read our docs
-                    </a>
+                {/* Hizmetlerimiz Section with Background */}
+                <div className="w-full bg-[var(--color-primary)] py-16 px-8">
+                    <section className="container mx-auto">
+                        <div className="flex justify-center items-center gap-2 mb-8">
+                            <h2 className="text-3xl font-bold text-center text-white">Hizmetlerimiz</h2>
+                            <Wrench size={32} className="text-white" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {services.map((service, index) => (
+                                <ServiceCard
+                                    key={index}
+                                    imageSrc={service.imageSrc}
+                                    title={service.title}
+                                    description={service.description}
+                                    buttonText={service.buttonText}
+                                    buttonLink={service.buttonLink}
+                                />
+                            ))}
+                        </div>
+                    </section>
                 </div>
             </main>
-            <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/file.svg"
-                        alt="File icon"
-                        width={16}
-                        height={16}
-                    />
-                    Learn
-                </a>
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/window.svg"
-                        alt="Window icon"
-                        width={16}
-                        height={16}
-                    />
-                    Examples
-                </a>
-                <a
-                    className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-                    href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <Image
-                        aria-hidden
-                        src="/globe.svg"
-                        alt="Globe icon"
-                        width={16}
-                        height={16}
-                    />
-                    Go to nextjs.org →
-                </a>
-            </footer>
         </div>
     );
 }
