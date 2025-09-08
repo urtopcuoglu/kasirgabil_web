@@ -1,4 +1,4 @@
-// src/app/components/BrandCard.tsx
+// src/app/component_page/BrandCard.tsx
 import React from 'react';
 import Image from 'next/image';
 

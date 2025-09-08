@@ -1,4 +1,4 @@
-// src/app/components/ServiceCard.tsx
+// src/app/component_page/ServiceCard.tsx
 import React from 'react';
 import Image from 'next/image';
 

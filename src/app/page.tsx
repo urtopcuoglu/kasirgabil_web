@@ -8,11 +8,11 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { Wrench, ScanBarcode } from 'lucide-react';
 
-import Header from "./components/header";
-import Footer from "./components/footer";
-import ProductCard from "./components/ProductCard";
-import ServiceCard from "./components/ServicesCard";
-import BrandCard from "./components/BrandCard";
+import Header from "@/app/component_page/header";
+import Footer from "@/app/component_page/footer";
+import ProductCard from "@/app/component_page/ProductCard";
+import ServiceCard from "@/app/component_page/ServicesCard";
+import BrandCard from "@/app/component_page/BrandCard";
 
 const sliderImages = [
     '/slider_image/slider-1.jpg',
