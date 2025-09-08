@@ -6,19 +6,19 @@ import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { Wrench, ScanBarcode } from 'lucide-react'; // Wrench ikonu eklendi
+import { Wrench, ScanBarcode } from 'lucide-react';
 
 import Header from "./components/header";
 import Footer from "./components/footer";
 import ProductCard from "./components/ProductCard";
 import ServiceCard from "./components/ServicesCard";
+import BrandCard from "./components/BrandCard"; // Yeni eklendi
 
 const sliderImages = [
     '/slider_image/slider-1.jpg',
     '/slider_image/slider-2.jpg',
     '/slider_image/slider-3.jpg',
 ];
-
 
 const productCategories = [
     {
@@ -94,9 +94,38 @@ const services = [
     },
 ];
 
+const brands = [
+    { brandName: 'Asus', logoSrc: '/brand/asus.png' },
+    { brandName: 'Lenovo', logoSrc: '/brand/lenovo.svg' },
+    { brandName: 'Apple', logoSrc: '/brand/apple.svg' },
+    { brandName: 'ThinkPad', logoSrc: '/brand/thinkpad.png' },
+    { brandName: 'Kingston', logoSrc: '/brand/kingston.jpg' },
+    { brandName: 'SteelSeries', logoSrc: '/brand/steelseries.png' },
+    { brandName: 'HP', logoSrc: '/brand/hp.svg' },
+    { brandName: 'AMD', logoSrc: '/brand/amd.svg' },
+    { brandName: 'Nvidia', logoSrc: '/brand/nvidia.svg' },
+    { brandName: 'Logitech', logoSrc: '/brand/logitech.svg' },
+    { brandName: 'Philips', logoSrc: '/brand/philips.svg' },
+    { brandName: 'Corsair', logoSrc: '/brand/corsair.png' },
+    { brandName: 'Dell', logoSrc: '/brand/dell.png' },
+    { brandName: 'Acer', logoSrc: '/brand/acer.svg' },
+    { brandName: 'TP-Link', logoSrc: '/brand/tplink.jpg' },
+    { brandName: 'Cisco', logoSrc: '/brand/cisco.svg' },
+    { brandName: 'MSI', logoSrc: '/brand/msi.jpg' },
+    { brandName: 'Hikvision', logoSrc: '/brand/hikvision.jpg' },
+    { brandName: 'Intel', logoSrc: '/brand/intel.svg' },
+    { brandName: 'Huawei', logoSrc: '/brand/huawei.svg' },
+    { brandName: 'Razer', logoSrc: '/brand/razer.svg' },
+    { brandName: 'Gigabyte', logoSrc: '/brand/gigabyte.svg' },
+    { brandName: 'Seagate', logoSrc: '/brand/seagate.png' },
+    { brandName: 'Fujitsu', logoSrc: '/brand/fujitsu.svg' },
+];
+
+
 export default function Home() {
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-800">
+
             <main className="flex-1 flex flex-col items-center">
                 <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">
                     {/* Image Slider Component */}
@@ -168,6 +197,21 @@ export default function Home() {
                         </div>
                     </section>
                 </div>
+
+                {/* Brands Section */}
+                <section className="w-full py-16 px-8">
+                    <div className="container mx-auto text-center">
+                        <h2 className="text-3xl font-bold mb-12 text-[var(--color-secondary)] dark:text-white">Markalarımız</h2>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {brands.map((brand, index) => (
+                                <BrandCard key={index} brandName={brand.brandName} logoSrc={brand.logoSrc} />
+                            ))}
+                        </div>
+                        <p className="text-lg mt-8 text-gray-600 dark:text-gray-300">
+                            Ve Diğer Tüm Markalarla Hizmetinizdeyiz...
+                        </p>
+                    </div>
+                </section>
             </main>
         </div>
     );
