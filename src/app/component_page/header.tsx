@@ -77,7 +77,7 @@ const Header = () => {
                         <input
                             type="text"
                             placeholder="Aradığın ürün burada?"
-                            className="w-full pl-4 py-2 focus:outline-none text-sm md:text-base text-zinc-800 placeholder-gray-400"
+                            className="w-full pl-4 py-2 focus:outline-none text-sm md:text-base text-white placeholder-gray-400"
                         />
                         <button className="bg-blue-600 text-white px-6 py-2 font-semibold hover:bg-blue-700 transition-colors">
                             Arama

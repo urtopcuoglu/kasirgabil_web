@@ -74,16 +74,16 @@ const services = [
     {
         imageSrc: '/services/technical-services.jpg',
         title: 'Tamir ve Bakım',
-        description: 'Cihazlarınız için profesyonel tamir, bakım ve onarım hizmetleri.',
+        description: 'Tüm bilgisayar ve bileşenleri için profesyonel tamir, bakım ve onarım hizmeti.',
         buttonText: 'Daha Fazlası',
         buttonLink: '#',
     },
     {
         imageSrc: '/services/web-design.jpg',
-        title: 'Yazılım Çözümleri',
-        description: 'İhtiyaçlarınıza özel yazılım geliştirme ve danışmanlık hizmetleri.',
+        title: 'Web Tasarım Çözümleri',
+        description: 'İhtiyaçlarınıza uygun web tasarım, e-ticaret ve dijital pazarlama çözümleri.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '#',
+        buttonLink: 'http://urtopcuoglu.github.io',
     },
     {
         imageSrc: '/services/server-network.jpg',
@@ -91,6 +91,13 @@ const services = [
         description: 'İşletmeler için IT altyapı çözümleri ve 7/24 teknik destek.',
         buttonText: 'Daha Fazlası',
         buttonLink: '#',
+    },
+    {
+        imageSrc: '/services/alisveris.jpg', // Örnek dördüncü resim
+        title: 'Sıfır ve İkinci El Alışveriş',
+        description: 'Tüm bilgisayar, donanım ve cihazlarda sıfır ve ikinci el alışveriş imkanı.',
+        buttonText: 'Alışveriş Sayfasına Git',
+        buttonLink: 'https://kasirgabilgisayar.sahibinden.com/',
     },
 ];
 
@@ -124,39 +131,39 @@ const brands = [
 export default function Home() {
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-800">
-            <main className="flex-1 flex flex-col items-center">
-                <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">
-                    {/* Image Slider Component */}
-                    <div className="w-full max-w-4xl mx-auto relative mb-12">
-                        <Swiper
-                            modules={[Navigation, Pagination]}
-                            spaceBetween={30}
-                            slidesPerView={1}
-                            navigation
-                            pagination={{ clickable: true }}
-                            onSlideChange={() => console.log('slide change')}
-                            onSwiper={(swiper) => console.log(swiper)}
-                            className="mySwiper"
-                        >
-                            {sliderImages.map((image, index) => (
-                                <SwiperSlide key={index}>
-                                    <Image
-                                        src={image}
-                                        alt={`Slider Image ${index + 1}`}
-                                        width={1000}
-                                        height={500}
-                                        layout="responsive"
-                                        objectFit="cover"
-                                        className="rounded-lg shadow-lg"
-                                    />
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
-                    </div>
 
+            <main className="flex-1 flex flex-col items-center">
+                {/* Image Slider Component (Full-width) */}
+                <div className="w-full relative h-[500px] mb-12">
+                    <Swiper
+                        modules={[Navigation, Pagination]}
+                        spaceBetween={30}
+                        slidesPerView={1}
+                        navigation
+                        pagination={{ clickable: true }}
+                        onSlideChange={() => console.log('slide change')}
+                        onSwiper={(swiper) => console.log(swiper)}
+                        className="mySwiper w-full h-full"
+                    >
+                        {sliderImages.map((image, index) => (
+                            <SwiperSlide key={index}>
+                                <Image
+                                    src={image}
+                                    alt={`Slider Image ${index + 1}`}
+                                    fill
+                                    objectFit="cover"
+                                    className="rounded-none shadow-none"
+                                />
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                </div>
+
+                {/* Main Content Sections (p-8 ve p-20 buraya taşındı) */}
+                <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">
                     {/* Product Categories Grid */}
                     <section className="w-full max-w-6xl mx-auto py-8">
-                        <div className="flex items-center justify-center gap-2 mb-8">
+                        <div className="flex justify-center items-center gap-2 mb-8">
                             <h2 className="text-3xl font-bold text-center text-[var(--color-secondary)] dark:text-white">Ürün Kategorileri</h2>
                             <ScanBarcode size={32} className="text-[var(--color-secondary)] dark:text-white" />
                         </div>
@@ -183,7 +190,7 @@ export default function Home() {
                             <h2 className="text-3xl font-bold text-center text-white">Hizmetlerimiz</h2>
                             <Wrench size={32} className="text-white" />
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {services.map((service, index) => (
                                 <ServiceCard
                                     key={index}
@@ -213,8 +220,6 @@ export default function Home() {
                     </div>
                 </section>
             </main>
-
-
         </div>
     );
 }
