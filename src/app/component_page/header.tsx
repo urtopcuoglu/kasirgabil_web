@@ -100,7 +100,7 @@ const Header = () => {
                             </li>
                             <li className="flex items-center space-x-1">
                                 <Wrench size={16} />
-                                <Link href="../public/products" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</Link>
+                                <Link href="../public/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</Link>
                             </li>
                             <li className="flex items-center space-x-1">
                                 <Mail size={16} />

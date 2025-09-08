@@ -1,13 +1,14 @@
 "use client";
 import React from "react";
 import Image from "next/image";
-import { Wrench, Handshake, MapPin, Phone, Instagram, Linkedin, PawPrint, ShieldHalf } from 'lucide-react';
+import { Wrench, Handshake, MapPin, Phone, Instagram, Linkedin, PawPrint, ShieldHalf, Banknote } from 'lucide-react';
 
 // Bileşenlerin doğru yollarını import edin
 import Header from "@/app/component_page/header";
 import Footer from "@/app/component_page/footer";
 import ServiceCard from "@/app/component_page/ServicesCard";
-import BrandCard from "@/app/component_page/BrandCard";
+import BrandCard from "@/app/component_page/BrandCard"; // Artık kullanılmıyor
+import BankCard from "@/app/component_page/BankCard"; // Yeni eklendi
 
 // Hizmetler bölümü için placeholder verisi
 const services = [
@@ -41,34 +42,34 @@ const services = [
     },
 ];
 
-// Markalar bölümü için placeholder verisi
-const brands = [
-    { brandName: 'Asus', logoSrc: '/brand/asus.png' },
-    { brandName: 'Lenovo', logoSrc: '/brand/lenovo.svg' },
-    { brandName: 'Apple', logoSrc: '/brand/apple.svg' },
-    { brandName: 'ThinkPad', logoSrc: '/brand/thinkpad.png' },
-    { brandName: 'Kingston', logoSrc: '/brand/kingston.jpg' },
-    { brandName: 'SteelSeries', logoSrc: '/brand/steelseries.png' },
-    { brandName: 'HP', logoSrc: '/brand/hp.svg' },
-    { brandName: 'AMD', logoSrc: '/brand/amd.svg' },
-    { brandName: 'Nvidia', logoSrc: '/brand/nvidia.svg' },
-    { brandName: 'Logitech', logoSrc: '/brand/logitech.svg' },
-    { brandName: 'Philips', logoSrc: '/brand/philips.svg' },
-    { brandName: 'Corsair', logoSrc: '/brand/corsair.png' },
-    { brandName: 'Dell', logoSrc: '/brand/dell.png' },
-    { brandName: 'Acer', logoSrc: '/brand/acer.svg' },
-    { brandName: 'TP-Link', logoSrc: '/brand/tplink.jpg' },
-    { brandName: 'Cisco', logoSrc: '/brand/cisco.svg' },
-    { brandName: 'MSI', logoSrc: '/brand/msi.jpg' },
-    { brandName: 'Hikvision', logoSrc: '/brand/hikvision.jpg' },
-    { brandName: 'Intel', logoSrc: '/brand/intel.svg' },
-    { brandName: 'Huawei', logoSrc: '/brand/huawei.svg' },
-    { brandName: 'Razer', logoSrc: '/brand/razer.svg' },
-    { brandName: 'Gigabyte', logoSrc: '/brand/gigabyte.svg' },
-    { brandName: 'Seagate', logoSrc: '/brand/seagate.png' },
-    { brandName: 'Fujitsu', logoSrc: '/brand/fujitsu.svg' },
+// Banka kartları için veriler
+const bankAccounts = [
+    {
+        logoSrc: '/bank/enpara.png', // Örnek yol, resimlerinizi buraya atın
+        accountName: 'Barbaros ER',
+        iban: 'TR-98-0011-1000-0000-0085-3692-20',
+    },
+    {
+        logoSrc: '/bank/yapi-kredi.jpg',
+        accountName: 'Barbaros ER',
+        branch: 'Kızılay Şubesi',
+        iban: 'TR43-0006-7010-0000-0087-136558',
+    },
+    {
+        logoSrc: '/bank/garanti.png',
+        accountName: 'Garanti Bankası', // Hesap adı görselde "Garanti Bankası" yazıyor, onu yazdım
+        branch: 'Kızılay Şubesi 082',
+        accountNumber: '6290386',
+        iban: 'TR37-0006-2000-0820-0006-2903-86',
+    },
+    {
+        logoSrc: '/bank/is-bankasi.png',
+        accountName: 'Barbaros ER',
+        branch: 'Isparta Merkez Şubesi (3300)',
+        accountNumber: '0799263',
+        iban: 'TR55-0006-4000-0013-3000-799263',
+    },
 ];
-
 
 export default function AboutPage() {
     return (
@@ -142,15 +143,27 @@ export default function AboutPage() {
                     </div>
                 </section>
 
-                {/* Çözüm Ortaklarımız Section */}
-                <section className="w-full max-w-6xl mx-auto py-8">
-                    <div className="flex justify-center items-center gap-2 mb-12">
-                        <h2 className="text-3xl font-bold text-center text-[var(--color-secondary)]">Çözüm Ortaklarımız</h2>
-                        <Handshake size={32} className="text-[var(--color-secondary)]" />
+                {/* Banka Hesapları Section */}
+                <section className="w-full max-w-6xl mx-auto py-8 text-center">
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="flex items-center space-x-2">
+                            <Banknote size={32} className="text-[var(--color-secondary)]" />
+                            <h2 className="text-3xl font-bold text-[var(--color-secondary)]">Banka Hesapları</h2>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-2">
+                            Aşağıdaki hesap numaralarından ödeme yapabilirsiniz.
+                        </p>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {brands.map((brand, index) => (
-                            <BrandCard key={index} brandName={brand.brandName} logoSrc={brand.logoSrc} />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        {bankAccounts.map((account, index) => (
+                            <BankCard
+                                key={index}
+                                logoSrc={account.logoSrc}
+                                accountName={account.accountName}
+                                branch={account.branch}
+                                accountNumber={account.accountNumber}
+                                iban={account.iban}
+                            />
                         ))}
                     </div>
                 </section>
