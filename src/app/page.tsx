@@ -12,7 +12,7 @@ import Header from "./components/header";
 import Footer from "./components/footer";
 import ProductCard from "./components/ProductCard";
 import ServiceCard from "./components/ServicesCard";
-import BrandCard from "./components/BrandCard"; // Yeni eklendi
+import BrandCard from "./components/BrandCard";
 
 const sliderImages = [
     '/slider_image/slider-1.jpg',
@@ -61,11 +61,11 @@ const productCategories = [
         buttonText: 'Daha Fazla',
     },
     {
-        imageSrc: '/product_images/different_products.jpg',
-        imageAlt: 'Değişik Ürünler',
-        title: 'Değişik Ürünler',
+        imageSrc: '/product_image/cevrebirimler.jpg',
+        imageAlt: 'Çevre Birimler',
+        title: 'Çevre Birimleri',
         description: 'Hayatınızı kolaylaştıracak ilginç ve sıradışı teknolojik ürünleri keşfedin.',
-        buttonText: 'Göz At',
+        buttonText: 'Daha Fazla',
         buttonLink: '#',
     },
 ];
@@ -121,11 +121,9 @@ const brands = [
     { brandName: 'Fujitsu', logoSrc: '/brand/fujitsu.svg' },
 ];
 
-
 export default function Home() {
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-800">
-
             <main className="flex-1 flex flex-col items-center">
                 <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">
                     {/* Image Slider Component */}
@@ -158,8 +156,10 @@ export default function Home() {
 
                     {/* Product Categories Grid */}
                     <section className="w-full max-w-6xl mx-auto py-8">
-                        <h2 className="text-3xl font-bold text-center mb-8 text-[var(--color-secondary)] dark:text-white">Ürün Kategorileri</h2>
-                        <ScanBarcode size={32} className="text-[var(--color-secondary)]" />
+                        <div className="flex items-center justify-center gap-2 mb-8">
+                            <h2 className="text-3xl font-bold text-center text-[var(--color-secondary)] dark:text-white">Ürün Kategorileri</h2>
+                            <ScanBarcode size={32} className="text-[var(--color-secondary)] dark:text-white" />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {productCategories.map((card, index) => (
                                 <ProductCard
@@ -213,6 +213,8 @@ export default function Home() {
                     </div>
                 </section>
             </main>
+
+
         </div>
     );
 }

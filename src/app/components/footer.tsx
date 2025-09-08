@@ -49,7 +49,7 @@ const Footer = () => {
 
                     {/* Kurumsal */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4">Kurumsal</h4>
+                        <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Kurumsal</h4>
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <a href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</a>
@@ -65,7 +65,7 @@ const Footer = () => {
 
                     {/* Çalışma Saatlerimiz */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4">Çalışma Saatlerimiz</h4>
+                        <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Çalışma Saatlerimiz</h4>
                         <ul className="space-y-2 text-sm">
                             <li>Pazartesi: 09:30 - 18:00</li>
                             <li>Salı: 09:30 - 18:00</li>
@@ -79,7 +79,7 @@ const Footer = () => {
 
                     {/* Alışveriş */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4">Alışveriş</h4>
+                        <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Alışveriş</h4>
                         <ul className="space-y-2 text-sm">
                             <li>
                                 <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Mesafeli Satış Sözleşmesi</a>
@@ -93,12 +93,23 @@ const Footer = () => {
                             <li>
                                 <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Kişisel Veriler Politikası</a>
                             </li>
+                            <li>
+                                <a href="https://kasirgabilgisayar.sahibinden.com/" className="mt-4 inline-block w-36">
+                                    <Image
+                                        src="/brand/sahibinden.svg"
+                                        alt="Sahibinden.com"
+                                        width={144}
+                                        height={48}
+                                        className="rounded-md"
+                                    />
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
                     {/* Bize Ulaşın */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4">Bize Ulaşın</h4>
+                        <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Bize Ulaşın</h4>
                         <ul className="space-y-4 text-sm">
                             <li className="flex items-center space-x-2">
                                 <Phone size={16} className="text-zinc-500" />
