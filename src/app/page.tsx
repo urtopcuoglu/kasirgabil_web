@@ -76,28 +76,28 @@ const services = [
         title: 'Tamir ve Bakım',
         description: 'Tüm bilgisayar ve bileşenleri için profesyonel tamir, bakım ve onarım hizmeti.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '#',
+        buttonLink: '/services/tamir-ve-bakim',
     },
     {
         imageSrc: '/services/web-design.jpg',
         title: 'Web Tasarım Çözümleri',
         description: 'İhtiyaçlarınıza uygun web tasarım, e-ticaret ve dijital pazarlama çözümleri.',
         buttonText: 'Daha Fazlası',
-        buttonLink: 'http://urtopcuoglu.github.io',
+        buttonLink: '/services/web-tasarim-cozumleri',
     },
     {
         imageSrc: '/services/server-network.jpg',
         title: 'Kurumsal Destek',
         description: 'İşletmeler için IT altyapı çözümleri ve 7/24 teknik destek.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '#',
+        buttonLink: '/services/kurumsal-destek',
     },
     {
         imageSrc: '/services/alisveris.jpg', // Örnek dördüncü resim
         title: 'Sıfır ve İkinci El Alışveriş',
         description: 'Tüm bilgisayar, donanım ve cihazlarda sıfır ve ikinci el alışveriş imkanı.',
         buttonText: 'Alışveriş Sayfasına Git',
-        buttonLink: 'https://kasirgabilgisayar.sahibinden.com/',
+        buttonLink: '/services/sifir-ve-ikinci-el-alisveris',
     },
 ];
 
@@ -211,7 +211,7 @@ export default function Home() {
                         <h2 className="text-3xl font-bold mb-12 text-[var(--color-secondary)] dark:text-white">Markalarımız</h2>
                         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                             {brands.map((brand, index) => (
-                                <BrandCard key={index} brandName={brand.brandName} logoSrc={brand.logoSrc} />
+                                <BrandCard key={index} index={index} brandName={brand.brandName} logoSrc={brand.logoSrc} />
                             ))}
                         </div>
                         <p className="text-lg mt-8 text-gray-600 dark:text-gray-300">

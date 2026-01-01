@@ -72,28 +72,28 @@ const servicesSliderData = [
         title: 'Tamir ve Bakım',
         description: 'Tüm bilgisayar ve bileşenleri için profesyonel tamir, bakım ve onarım hizmeti.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '../public/services/tamir-ve-bakim',
+        buttonLink: '/services/tamir-ve-bakim',
     },
     {
         imageSrc: '/services/web-design.jpg',
         title: 'Web Tasarım Çözümleri',
         description: 'İhtiyaçlarınıza uygun web tasarım, e-ticaret ve dijital pazarlama çözümleri.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '../public/services/web-tasarim-cozumleri',
+        buttonLink: '/services/web-tasarim-cozumleri',
     },
     {
         imageSrc: '/services/server-network.jpg',
         title: 'Kurumsal Destek',
         description: 'İşletmeler için IT altyapı çözümleri ve 7/24 teknik destek.',
         buttonText: 'Daha Fazlası',
-        buttonLink: '../public/services/kurumsal-destek',
+        buttonLink: '/services/kurumsal-destek',
     },
     {
         imageSrc: '/services/alisveris.jpg',
         title: 'Sıfır ve İkinci El Alışveriş',
         description: 'Tüm bilgisayar, donanım ve cihazlarda sıfır ve ikinci el alışveriş imkanı.',
         buttonText: 'Alışveriş Sayfasına Git',
-        buttonLink: '../public/services/sifir-ve-ikinci-el-alisveris',
+        buttonLink: '/services/sifir-ve-ikinci-el-alisveris',
     },
 ];
 
@@ -310,3 +310,4 @@ export default function ServicesPage() {
         </div>
     );
 }
+

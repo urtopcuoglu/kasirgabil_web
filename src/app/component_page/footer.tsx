@@ -1,9 +1,31 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Linkedin, Instagram } from 'lucide-react';
 
 const Footer = () => {
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+
+    const dropdownContent: { [key: string]: { title: string; content: string } } = {
+        'mesafeli-satis': {
+            title: 'Mesafeli Satış Sözleşmesi',
+            content: 'Kasırga Bilgisayar olarak sunduğumuz tüm ürünler ve hizmetlerde mesafeli satış yönetmeliğine uygun olarak işlem yapmaktayız. Ürün ve hizmetleri satın almadan önce lütfen mesafeli satış sözleşmemizi dikkatle okuyunuz. Müşteri hakları ve sorumluluklarımız bu sözleşmede belirtilmiştir.'
+        },
+        'gizlilik-politikasi': {
+            title: 'Gizlilik Politikası',
+            content: 'Kasırga Bilgisayar, kişisel verilerinizin gizliliğine ve korunmasına önem vermektedir. Web sitemizi ziyaret ettiğinizde veya ürünlerimizi satın aldığınızda toplanan bilgiler, yalnızca belirtilen amaçlar için kullanılır ve üçüncü şahıslarla paylaşılmaz. Detaylı bilgi için gizlilik politikamızı okuyunuz.'
+        },
+        'iptal-iade': {
+            title: 'İptal ve İade',
+            content: 'Kasırga Bilgisayar\'dan satın aldığınız ürünleri, teslim aldığınız tarihten itibaren 14 gün içerisinde hiçbir sebep göstermeksizin iade edebilirsiniz. İade işlemi için lütfen müşteri hizmetlerimiz ile iletişime geçiniz. İade edilen ürünler kontrol edildikten sonra ödemeniz iade edilecektir.'
+        },
+        'kisisel-veriler': {
+            title: 'Kişisel Veriler Politikası',
+            content: 'KVKK (Kişisel Verilerin Korunması Kanunu) uyarınca, sizden toplanan kişisel veriler gizli tutulmakta ve yalnızca belirtilen amaçlar doğrultusunda kullanılmaktadır. Verilerinize erişim, düzeltme veya silme talebinde bulunabilirsiniz. İhtiyaç duydukça bizimle iletişime geçebilirsiniz.'
+        }
+    };
+
     return (
         <footer className="w-full bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
             {/* Newsletter Section */}
@@ -21,10 +43,10 @@ const Footer = () => {
                                 <input
                                     type="email"
                                     placeholder="E-Mail adresinizi yazınız"
-                                    className="w-full pl-4 pr-4 py-2 rounded-full bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                                    className="w-full pl-4 pr-4 py-3 rounded-2xl bg-white dark:bg-zinc-800 border-2 border-white dark:border-zinc-700 hover:border-[var(--color-primary)] text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-all duration-300"
                                 />
                             </div>
-                            <button className="w-full sm:w-auto px-8 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-secondary)] transition-colors rounded-full font-semibold">
+                            <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-white to-gray-100 dark:from-zinc-100 dark:to-white text-[var(--color-primary)] hover:from-[var(--color-primary)] hover:to-[var(--color-secondary)] hover:text-white rounded-full font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 transform active:scale-95 border-2 border-transparent hover:border-white">
                                 Kaydet
                             </button>
                         </div>
@@ -52,13 +74,13 @@ const Footer = () => {
                         <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Kurumsal</h4>
                         <ul className="space-y-2 text-sm">
                             <li>
-                                <a href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</a>
+                                <a href="/public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</a>
                             </li>
                             <li>
-                                <a href="../public/contact" className="hover:text-[var(--color-primary)] transition-colors">Ürünlerimiz</a>
+                                <a href="/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</a>
                             </li>
                             <li>
-                                <a href="../public/products" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a>
+                                <a href="/public/contact" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a>
                             </li>
                         </ul>
                     </div>
@@ -82,25 +104,45 @@ const Footer = () => {
                         <h4 className="font-bold text-lg mb-4 hover:text-[var(--color-primary)] transition-colors">Alışveriş</h4>
                         <ul className="space-y-2 text-sm">
                             <li>
-                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Mesafeli Satış Sözleşmesi</a>
+                                <button
+                                    onClick={() => setOpenDropdown('mesafeli-satis')}
+                                    className="hover:text-[var(--color-primary)] transition-colors w-full text-left"
+                                >
+                                    Mesafeli Satış Sözleşmesi
+                                </button>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Gizlilik Politikası</a>
+                                <button
+                                    onClick={() => setOpenDropdown('gizlilik-politikasi')}
+                                    className="hover:text-[var(--color-primary)] transition-colors w-full text-left"
+                                >
+                                    Gizlilik Politikası
+                                </button>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">İptal ve İade</a>
+                                <button
+                                    onClick={() => setOpenDropdown('iptal-iade')}
+                                    className="hover:text-[var(--color-primary)] transition-colors w-full text-left"
+                                >
+                                    İptal ve İade
+                                </button>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-[var(--color-primary)] transition-colors">Kişisel Veriler Politikası</a>
+                                <button
+                                    onClick={() => setOpenDropdown('kisisel-veriler')}
+                                    className="hover:text-[var(--color-primary)] transition-colors w-full text-left"
+                                >
+                                    Kişisel Veriler Politikası
+                                </button>
                             </li>
                             <li>
-                                <a href="https://kasirgabilgisayar.sahibinden.com/" className="mt-4 inline-block w-36">
+                                <a href="https://kasirgabilgisayar.sahibinden.com/" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block w-36">
                                     <Image
                                         src="/brand/sahibinden.svg"
                                         alt="Sahibinden.com"
                                         width={144}
                                         height={48}
-                                        className="rounded-md"
+                                        className="rounded-md hover:opacity-80 transition-opacity"
                                     />
                                 </a>
                             </li>
@@ -127,7 +169,6 @@ const Footer = () => {
                                 <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya - Ankara</p>
                             </li>
                         </ul>
-
                         {/* Sosyal Medya İkonları */}
                         <div className="flex space-x-4 mt-6">
                             <a href="https://www.linkedin.com/company/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
@@ -161,6 +202,47 @@ const Footer = () => {
             >
                 <Phone size={24} />
             </a>
+
+            {/* Dropdown Content Modal */}
+            {openDropdown && ['mesafeli-satis', 'gizlilik-politikasi', 'iptal-iade', 'kisisel-veriler'].includes(openDropdown) && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4"
+                    onClick={() => setOpenDropdown(null)}
+                >
+                    <div
+                        className="bg-white dark:bg-zinc-800 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl animate-fadeIn"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="sticky top-0 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white p-6 flex justify-between items-center">
+                            <h2 className="text-2xl font-bold">{dropdownContent[openDropdown]?.title}</h2>
+                            <button
+                                onClick={() => setOpenDropdown(null)}
+                                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 text-zinc-800 dark:text-zinc-200">
+                            <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                                {dropdownContent[openDropdown]?.content}
+                            </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="bg-gray-100 dark:bg-zinc-700 p-6 border-t border-gray-300 dark:border-zinc-600 flex justify-end">
+                            <button
+                                onClick={() => setOpenDropdown(null)}
+                                className="px-6 py-2 bg-[var(--color-primary)] text-white rounded-lg hover:bg-[var(--color-secondary)] transition-colors font-semibold"
+                            >
+                                Kapat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </footer>
     );
 };

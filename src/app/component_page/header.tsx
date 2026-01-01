@@ -72,46 +72,38 @@ const Header = () => {
 
                 {/* Search Box and Navigation Container */}
                 <div className="flex-grow flex items-center justify-end">
-                    {/* Search Box */}
-                    <div className="flex w-full max-w-lg border border-gray-300 rounded-full overflow-hidden mr-12">
+                {/* Search Box */}
+                    <div className="flex w-full max-w-lg border-2 border-white hover:border-[var(--color-primary)] rounded-full overflow-hidden mr-12 transition-colors duration-300 focus-within:border-[var(--color-primary)]">
                         <input
                             type="text"
                             placeholder="Aradığın ürün burada?"
-                            className="w-full pl-4 py-2 focus:outline-none text-sm md:text-base text-white placeholder-gray-400"
+                            className="w-full pl-4 py-3 focus:outline-none text-sm md:text-base text-white placeholder-gray-300 bg-transparent transition-all duration-300"
                         />
-                        <button className="bg-blue-600 text-white px-6 py-2 font-semibold hover:bg-blue-700 transition-colors">
+                        <button className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white px-6 py-3 font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 transform active:scale-95">
                             Arama
                         </button>
                     </div>
 
                     <div className="flex items-center space-x-6">
                         <ul className="flex space-x-4 text-white">
-                            <li className="flex items-center space-x-1">
+                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
                                 <Home size={16} />
                                 <Link href="/" className="hover:text-[var(--color-primary)] transition-colors">Anasayfa</Link>
                             </li>
-                            <li className="flex items-center space-x-1">
+                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
                                 <Info size={16} />
                                 <Link href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</Link>
                             </li>
-                            <li className="flex items-center space-x-1">
-                                <ShoppingBag size={16} />
-                                <Link href="../public/products" className="hover:text-[var(--color-primary)] transition-colors">Ürünler</Link>
-                            </li>
-                            <li className="flex items-center space-x-1">
+                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
                                 <Wrench size={16} />
-                                <Link href="../public/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</Link>
+                                <Link href="/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</Link>
                             </li>
-                            <li className="flex items-center space-x-1">
+                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
                                 <Mail size={16} />
                                 <Link href="../public/contact" className="hover:text-[var(--color-primary)] transition-colors">İletişim</Link>
                             </li>
                         </ul>
-                        <div className='flex items-center space-x-4'>
-                            <Moon size={16} className='text-white' />
-                            <SwitchDualIconLabelDemo />
-                            <Sun size={16} className='text-white' />
-                        </div>
+
                     </div>
                 </div>
             </nav>
@@ -119,8 +111,8 @@ const Header = () => {
             {/* Banner Section below Header */}
             <div className="bg-[var(--color-primary)] text-white py-2 px-4">
                 <div className="container mx-auto flex justify-between items-center text-sm font-semibold">
-                    <Link href="#" className="hover:underline">Güvenin Başkenti</Link>
-                    <Link href="#" className="hover:underline text-right">Kasırga Bilgisayar Teknik Servis ve Alışveriş Rehberi</Link>
+                    <Link href="#" className="border-b-2 border-transparent hover:border-white transition-all duration-300">Güvenin Başkenti</Link>
+                    <Link href="#" className="border-b-2 border-transparent hover:border-white transition-all duration-300 text-right">Kasırga Bilgisayar Teknik Servis ve Alışveriş Rehberi</Link>
                 </div>
             </div>
         </header>
