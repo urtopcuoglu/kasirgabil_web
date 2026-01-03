@@ -82,6 +82,9 @@ const Footer = () => {
                             <li>
                                 <a href="/public/contact" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a>
                             </li>
+                            <li>
+                                <a href="/services/teknik-servis" className="hover:text-[var(--color-primary)] transition-colors">Teknik Servis</a>
+                            </li>
                         </ul>
                     </div>
 
