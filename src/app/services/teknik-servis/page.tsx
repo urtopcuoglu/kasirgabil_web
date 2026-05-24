@@ -1,13 +1,24 @@
 "use client";
 import React, { useState } from 'react';
-import Link from 'next/link';
 import { Search, Phone, FileText, User, ChevronLeft } from 'lucide-react';
+
+interface ServiceRecord {
+    id: number;
+    phone: string;
+    formNo: string;
+    name: string;
+    device: string;
+    problemDescription: string;
+    serviceStatus: string;
+    entryDate: string;
+    estimatedDate: string;
+}
 
 export default function TeknikServisPage() {
     const [searchPhone, setSearchPhone] = useState('');
     const [searchFormNo, setSearchFormNo] = useState('');
     const [searchName, setSearchName] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<ServiceRecord[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
 
     // Mock veri - İleride gerçek API ile değiştirilecek
@@ -187,7 +198,7 @@ export default function TeknikServisPage() {
                                 <div className="text-center">
                                     <Search size={64} className="text-gray-300 mx-auto mb-4" />
                                     <h3 className="text-xl font-semibold text-gray-600 mb-2">ÇOK YAKINDA !</h3>
-                                    <p className="text-gray-500">Bu özellik Kasirga_Web v2'de aktif olacaktır.</p>
+                                    <p className="text-gray-500">Bu özellik Kasirga_Web v2&apos;de aktif olacaktır.</p>
                                 </div>
                             </div>
                         ) : searchResults.length === 0 ? (

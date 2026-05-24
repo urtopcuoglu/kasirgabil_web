@@ -87,7 +87,7 @@ export default function AboutPage() {
                             <h2 className="text-2xl font-semibold mb-4 text-[var(--color-secondary)]">Biz Kimiz?</h2>
                             <p className="text-gray-600 dark:text-gray-300">
                                 Kasırga Bilgisayar, 1999 yılında Ankara Adil Han İş Hanında, Babaros Er tarafından küçük bir dükkan içerisinde kuruldu. Uzun yıllar Adil Han İş hanında hizmet veren Kasırga Bilgisayar, kalitesi ve profesyonel hizmeti ile her zaman bir ileri giderek büyümüştür.
-                                Ankara'nın en köklü en eski ve en başarılı Bilgisayar hizmetleri veren bir yer olma konumundadır. Kasırga Bilgisayar deneyimi ve profesyonel ekibi ile siz değerli müşterilere hizmet vermeye ve büyümeye devam edecektir.
+                                Ankara&apos;nın en köklü en eski ve en başarılı Bilgisayar hizmetleri veren bir yer olma konumundadır. Kasırga Bilgisayar deneyimi ve profesyonel ekibi ile siz değerli müşterilere hizmet vermeye ve büyümeye devam edecektir.
                             </p>
                         </div>
                         {/* Sağ Kısım: Resim */}
@@ -110,14 +110,14 @@ export default function AboutPage() {
                         <div className="bg-[var(--color-primary)] text-white p-6 rounded-lg shadow-lg">
                             <h2 className="text-2xl font-bold mb-4">Misyonumuz</h2>
                             <p className="text-sm">
-                                1999 yılından beri Ankara'da edindiğimiz tecrübeyle, müşterilerimize en kaliteli ve profesyonel bilgisayar hizmetlerini sunmak. Her geçen gün büyüyen ve gelişen bir firma olarak, teknolojiyi yakından takip ederek kaliteden ödün vermeden güvenilir bir çözüm ortağı olmayı hedefliyoruz.
+                                1999 yılından beri Ankara&apos;da edindiğimiz tecrübeyle, müşterilerimize en kaliteli ve profesyonel bilgisayar hizmetlerini sunmak. Her geçen gün büyüyen ve gelişen bir firma olarak, teknolojiyi yakından takip ederek kaliteden ödün vermeden güvenilir bir çözüm ortağı olmayı hedefliyoruz.
                             </p>
                         </div>
                         {/* Vizyonumuz */}
                         <div className="bg-[var(--color-primary)] text-white p-6 rounded-lg shadow-lg">
                             <h2 className="text-2xl font-bold mb-4">Vizyonumuz</h2>
                             <p className="text-sm">
-                                Ankara'nın en köklü ve başarılı bilgisayar hizmeti veren firması olma konumumuzu koruyarak, profesyonel ekibimizle sürekli büyüyen bir müşteri kitlesine hitap etmek. Müşteri memnuniyetini daima ön planda tutarak sektördeki liderliğimizi sürdürmek ve yenilikçi çözümlerimizle geleceğin teknolojisine yön veren bir marka olmaktır.
+                                Ankara&apos;nın en köklü ve başarılı bilgisayar hizmeti veren firması olma konumumuzu koruyarak, profesyonel ekibimizle sürekli büyüyen bir müşteri kitlesine hitap etmek. Müşteri memnuniyetini daima ön planda tutarak sektördeki liderliğimizi sürdürmek ve yenilikçi çözümlerimizle geleceğin teknolojisine yön veren bir marka olmaktır.
                             </p>
                         </div>
                     </div>

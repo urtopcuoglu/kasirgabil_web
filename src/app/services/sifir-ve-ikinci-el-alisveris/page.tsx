@@ -85,7 +85,7 @@ export default function SifirVeIkinciElPage() {
                         <div className="bg-gray-50 p-8 rounded-lg">
                             <h3 className="text-2xl font-bold mb-4 text-gray-900">Neden Kasırga Bilgisayar?</h3>
                             <p className="text-gray-700 mb-4">
-                                Kasırga Bilgisayar, Sahibinden.com'da güvenilir bir satıcı olarak yer almaktadır.
+                                Kasırga Bilgisayar, Sahibinden.com&apos;da güvenilir bir satıcı olarak yer almaktadır.
                             </p>
                             <ul className="space-y-2 text-gray-700">
                                 <li>• Uygun Fiyatlar</li>
@@ -103,7 +103,7 @@ export default function SifirVeIkinciElPage() {
                                 rel="noopener noreferrer"
                                 className="inline-block px-8 py-3 bg-[var(--color-primary)] text-white rounded-full font-semibold hover:bg-[var(--color-secondary)] transition-colors"
                             >
-                                Sahibinden'de Göz At
+                                Sahibinden&apos;de Göz At
                             </a>
                         </div>
                     </div>

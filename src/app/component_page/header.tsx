@@ -119,13 +119,13 @@ const Header = () => {
                                 </button>
                             </PopoverTrigger>
                             <PopoverContent className="w-full md:w-96 bg-white">
-                                <div className="space-y-4">
+                           <div className="space-y-4">
                                     <div className="space-y-1.5">
                                         <h4 className="font-bold text-lg text-gray-800 flex items-center space-x-2">
                                             <Landmark size={20} className="text-[var(--color-primary)]" />
                                             <span>Banka Hesaplarımız</span>
                                         </h4>
-                                        <p className="text-sm text-gray-600">Kasırga Bilgisayar'a ait banka hesap bilgileri</p>
+                                        <p className="text-sm text-gray-600">Kasırga Bilgisayar&apos;a ait banka hesap bilgileri</p>
                                     </div>
                                     <div className="space-y-3 max-h-96 overflow-y-auto">
                                         {bankAccounts.map((bank) => (
