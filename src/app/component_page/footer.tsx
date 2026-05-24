@@ -158,7 +158,7 @@ const Footer = () => {
                 <div className="container mx-auto text-center md:text-left text-xs flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
                     <p>&copy; 2025 Kasırga Bilgisayar Tüm Hakları Saklıdır.</p>
                     <p>
-                        Design by <a href="http://urtopcuoglu.github.io" target="_blank" rel="noopener noreferrer" className="hover:underline">urtdigital</a>
+                        Design by <a href="https://www.ortisoft.com.tr" target="_blank" rel="noopener noreferrer" className="hover:underline">Ortisoft</a>
                     </p>
                 </div>
             </div>
