@@ -37,7 +37,7 @@ export default function MesafeliSatisSozlesmesiPage() {
                                 <p className="font-bold text-[var(--color-secondary)]">SATICI</p>
                                 <p className="text-gray-700 dark:text-gray-300 text-sm">Kasırga Bilgisayar</p>
                                 <p className="text-gray-700 dark:text-gray-300 text-sm">Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya / Ankara</p>
-                                <p className="text-gray-700 dark:text-gray-300 text-sm">Tel: 0 (312) 311 93 39</p>
+                                <p className="text-gray-700 dark:text-gray-300 text-sm">Tel: 0 (312) 312 60 11</p>
                                 <p className="text-gray-700 dark:text-gray-300 text-sm">E-posta: info@kasirgabilgisayar.com</p>
                             </div>
                             <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-1">
@@ -111,7 +111,7 @@ export default function MesafeliSatisSozlesmesiPage() {
                             <p><strong>Kasırga Bilgisayar</strong></p>
                             <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya / Ankara</p>
                             <p>E-posta: info@kasirgabilgisayar.com</p>
-                            <p>Tel: 0 (312) 311 93 39</p>
+                            <p>Tel: 0 (312) 312 60 11</p>
                         </div>
                     </section>
                 </div>

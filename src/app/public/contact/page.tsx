@@ -120,7 +120,8 @@ export default function ContactPage() {
                                 <Phone size={48} className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors" />
                                 <h3 className="text-xl font-semibold text-[var(--color-secondary)]">Telefon Numaralarımız</h3>
                                 <div className="space-y-1">
-                                    <p className="font-semibold text-[var(--color-secondary)]">0 (312) 311 93 39</p>
+                                    <p className="font-semibold text-[var(--color-secondary)]">0 (312) 431 02 64</p>
+                                    <p className="font-semibold text-[var(--color-secondary)]">0 (312) 312 60 11</p>
                                     <p className="font-semibold text-[var(--color-secondary)]">0 (505) 387 79 39</p>
                                 </div>
                             </div>

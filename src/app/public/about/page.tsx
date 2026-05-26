@@ -24,7 +24,7 @@ const services = [
         title: 'Web Tasarım Çözümleri',
         description: 'İhtiyaçlarınıza uygun web tasarım, e-ticaret ve dijital pazarlama çözümleri.',
         buttonText: 'Daha Fazlası',
-        buttonLink: 'http://urtopcuoglu.github.io',
+        buttonLink: 'https://www.ortisoft.com.tr',
     },
     {
         imageSrc: '/services/server-network.jpg',
@@ -202,7 +202,7 @@ export default function AboutPage() {
                                 <div className="space-y-1">
                                     <div className="flex items-center space-x-2">
                                         <Phone size={16} className="text-[var(--color-primary)]" />
-                                        <p className="text-gray-600">0 (312) 431 02 64</p>
+                                        <p className="text-gray-600">0 (312) 312 60 11</p>
                                     </div>
                                     <div className="flex items-center space-x-2">
                                         <Phone size={16} className="text-[var(--color-primary)]" />

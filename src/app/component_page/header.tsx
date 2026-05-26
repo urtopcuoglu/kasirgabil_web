@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Wrench, Home, Info, ShoppingBag, Hammer, Mail, Moon, Sun, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check } from 'lucide-react';
+import { Wrench, Home, Info, Hammer, Mail, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check, Menu, X } from 'lucide-react';
 
 // Banka Hesapları Veri Yapısı
 const bankAccounts = [
@@ -43,9 +43,18 @@ const bankAccounts = [
     },
 ];
 
+const navLinks = [
+    { href: '/', label: 'Anasayfa', icon: Home },
+    { href: '../public/about', label: 'Hakkımızda', icon: Info },
+    { href: '/services', label: 'Hizmetlerimiz', icon: Wrench },
+    { href: '../public/contact', label: 'İletişim', icon: Mail },
+    { href: '/services/teknik-servis', label: 'Teknik Servis', icon: Hammer },
+];
+
 const Header = () => {
     const [exchangeRates, setExchangeRates] = useState<{ usd: string | null; eur: string | null }>({ usd: null, eur: null });
     const [loading, setLoading] = useState<boolean>(true);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const fetchExchangeRates = async () => {
@@ -82,34 +91,34 @@ const Header = () => {
 
     return (
         <header className="site-header bg-[var(--color-secondary)] text-primary shadow-md">
-            {/* Top Bar for Exchange Rates, Address, Phone, and Socials */}
+            {/* Top Bar */}
             <div className="bg-white text-[var(--color-secondary)] text-xs py-2 px-4 w-full">
-                <div className="container mx-auto flex justify-between items-center">
-                    {/* Döviz Kurları (Sola Yaslı) */}
-                    <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-1 px-3 py-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-full font-semibold hover:shadow-md transition-all duration-300">
-                            <span>1$ = </span>
+                <div className="container mx-auto flex justify-between items-center gap-2">
+                    {/* Döviz Kurları */}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-full font-semibold">
+                            <span>1$ =</span>
                             <span>{loading ? '...' : `${exchangeRates.usd} ₺`}</span>
                         </div>
-                        <div className="flex items-center space-x-1 px-3 py-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-full font-semibold hover:shadow-md transition-all duration-300">
-                            <span>1€ = </span>
+                        <div className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-full font-semibold">
+                            <span>1€ =</span>
                             <span>{loading ? '...' : `${exchangeRates.eur} ₺`}</span>
                         </div>
                     </div>
 
-                    {/* Adres ve Telefon (Orta) */}
-                    <div className="hidden lg:flex items-center space-x-6">
-                        <div className="flex items-center space-x-1">
-                            <MapPin size={16} className="text-[var(--color-secondary)]" />
+                    {/* Adres ve Telefon — sadece büyük ekranlarda */}
+                    <div className="hidden lg:flex items-center gap-6">
+                        <div className="flex items-center gap-1">
+                            <MapPin size={14} className="text-[var(--color-secondary)] shrink-0" />
                             <span>Cumhuriyet Mh. Bayındır-1 Sk. 5/10 Çankaya/Ankara</span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                            <Phone size={16} className="text-[var(--color-secondary)]" />
+                        <a href="tel:03124310264" className="flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors">
+                            <Phone size={14} className="text-[var(--color-secondary)] shrink-0" />
                             <span>0312 431 02 64</span>
-                        </div>
+                        </a>
                     </div>
 
-                    {/* Banka Hesapları ve Sosyal Medya (Sağa Yaslı) */}
+                    {/* Banka Hesapları ve Sosyal Medya */}
                     <div className="flex items-center space-x-4">
                         <Popover>
                             <PopoverTrigger asChild>
@@ -190,8 +199,9 @@ const Header = () => {
                 </div>
             </div>
 
-            <nav className="container mx-auto flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 py-6 px-4 min-h-24">
-                <div className="logo text-2xl font-bold">
+            <nav className="container mx-auto flex justify-between items-center py-4 px-4">
+                {/* Logo */}
+                <div className="logo">
                     <Link href="/">
                         <Image
                             src="/logo/logo-beyaz.png"
@@ -203,44 +213,84 @@ const Header = () => {
                     </Link>
                 </div>
 
-                {/* Search Box and Navigation Container */}
-                <div className="flex-grow flex items-center justify-end">
-                {/* Search Box */}
-                    <div className="flex w-full max-w-lg border-2 border-white hover:border-[var(--color-primary)] rounded-full overflow-hidden mr-12 transition-colors duration-300 focus-within:border-[var(--color-primary)]">
+                {/* Desktop: Search + Nav Links */}
+                <div className="hidden md:flex flex-grow items-center justify-end gap-6">
+                    <div className="flex w-full max-w-lg border-2 border-white hover:border-[var(--color-primary)] rounded-full overflow-hidden transition-colors duration-300 focus-within:border-[var(--color-primary)]">
                         <input
                             type="text"
                             placeholder="Aradığın ürün burada?"
-                            className="w-full pl-4 py-3 focus:outline-none text-sm md:text-base text-white placeholder-gray-300 bg-transparent transition-all duration-300"
+                            className="w-full pl-4 py-2.5 focus:outline-none text-sm text-white placeholder-gray-300 bg-transparent"
                         />
-                        <button className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white px-6 py-3 font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 transform active:scale-95">
-                            Arama
+                        <button className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white px-5 py-2.5 font-semibold hover:shadow-lg transition-all duration-300 active:scale-95">
+                            Ara
                         </button>
                     </div>
+                    <ul className="flex items-center gap-4 text-white text-sm whitespace-nowrap">
+                        {navLinks.map(({ href, label, icon: Icon }) => (
+                            <li key={href} className="flex items-center gap-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
+                                <Icon size={14} />
+                                <Link href={href} className="hover:text-[var(--color-primary)] transition-colors">{label}</Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
 
-                    <div className="flex items-center space-x-6">
-                        <ul className="flex space-x-4 text-white">
-                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
-                                <Home size={16} />
-                                <Link href="/" className="hover:text-[var(--color-primary)] transition-colors">Anasayfa</Link>
-                            </li>
-                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
-                                <Info size={16} />
-                                <Link href="../public/about" className="hover:text-[var(--color-primary)] transition-colors">Hakkımızda</Link>
-                            </li>
-                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
-                                <Wrench size={16} />
-                                <Link href="/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</Link>
-                            </li>
-                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1">
-                                <Mail size={16} />
-                                <Link href="../public/contact" className="hover:text-[var(--color-primary)] transition-colors">İletişim</Link>
-                            </li>
-                            <li className="flex items-center space-x-1 border-b-2 border-transparent hover:border-[var(--color-primary)] transition-all duration-300 pb-1"><Hammer size={16} /><Link href="/services/teknik-servis" className="hover:text-[var(--color-primary)] transition-colors">Teknik Servis</Link></li>
-                        </ul>
+                {/* Mobile: Hamburger Button */}
+                <button
+                    className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    onClick={() => setMobileMenuOpen(prev => !prev)}
+                    aria-label="Menüyü aç/kapat"
+                >
+                    {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+                </button>
+            </nav>
 
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+                <div className="md:hidden bg-[var(--color-secondary)] border-t border-white/20 px-4 pb-5">
+                    {/* Mobile Search */}
+                    <div className="flex border-2 border-white/50 rounded-full overflow-hidden my-4 focus-within:border-[var(--color-primary)] transition-colors">
+                        <input
+                            type="text"
+                            placeholder="Ürün ara..."
+                            className="w-full pl-4 py-2.5 text-sm text-white placeholder-gray-300 bg-transparent focus:outline-none"
+                        />
+                        <button className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white px-5 py-2.5 font-semibold">
+                            Ara
+                        </button>
+                    </div>
+                    {/* Mobile Nav Links */}
+                    <ul className="flex flex-col gap-1 text-white">
+                        {navLinks.map(({ href, label, icon: Icon }) => (
+                            <li key={href}>
+                                <Link
+                                    href={href}
+                                    className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/10 transition-colors"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <Icon size={18} className="text-[var(--color-primary)]" />
+                                    <span className="font-medium">{label}</span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                    {/* Mobile Phone Numbers */}
+                    <div className="mt-4 pt-4 border-t border-white/20 flex flex-col gap-2">
+                        <a href="tel:03124310264" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
+                            <Phone size={15} className="text-[var(--color-primary)]" />
+                            0 (312) 431 02 64
+                        </a>
+                        <a href="tel:03123126011" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
+                            <Phone size={15} className="text-[var(--color-primary)]" />
+                            0 (312) 312 60 11
+                        </a>
+                        <a href="tel:05053877939" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
+                            <Phone size={15} className="text-[var(--color-primary)]" />
+                            0 (505) 387 79 39
+                        </a>
                     </div>
                 </div>
-            </nav>
+            )}
 
             {/* Banner Section below Header */}
             <div className="bg-[var(--color-primary)] text-white py-2 px-4">

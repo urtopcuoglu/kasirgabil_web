@@ -106,7 +106,7 @@ export default function KvkkPage() {
                             <p><strong>Kasırga Bilgisayar</strong></p>
                             <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya / Ankara</p>
                             <p>E-posta: info@kasirgabilgisayar.com</p>
-                            <p>Tel: 0 (312) 311 93 39</p>
+                            <p>Tel: 0 (312) 312 60 11</p>
                         </div>
                         <p className="text-gray-600 dark:text-gray-400 text-sm">
                             Başvurunuzu yazılı olarak ıslak imzalı şekilde elden, iadeli taahhütlü mektupla veya e-posta yoluyla iletebilirsiniz. Talebiniz en geç 30 gün içinde sonuçlandırılacaktır.

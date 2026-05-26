@@ -102,7 +102,7 @@ export default function GizlilikPolitikasiPage() {
                             <p><strong>Kasırga Bilgisayar</strong></p>
                             <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya / Ankara</p>
                             <p>E-posta: info@kasirgabilgisayar.com</p>
-                            <p>Tel: 0 (312) 311 93 39</p>
+                            <p>Tel: 0 (312) 312 60 11</p>
                         </div>
                     </section>
                 </div>

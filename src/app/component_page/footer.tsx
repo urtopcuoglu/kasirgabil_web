@@ -127,7 +127,8 @@ const Footer = () => {
                             <li className="flex items-center space-x-2">
                                 <Phone size={16} className="text-zinc-500" />
                                 <div>
-                                    <p className="font-semibold">0 (312) 311 93 39</p>
+                                    <p className="font-semibold">0 (312) 431 02 64</p>
+                                    <p className="font-semibold">0 (312) 312 60 11</p>
                                     <p className="font-semibold">0 (505) 387 79 39</p>
                                 </div>
                             </li>
@@ -158,7 +159,7 @@ const Footer = () => {
                 <div className="container mx-auto text-center md:text-left text-xs flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
                     <p>&copy; 2025 Kasırga Bilgisayar Tüm Hakları Saklıdır.</p>
                     <p>
-                        Design by <a href="http://urtopcuoglu.github.io" target="_blank" rel="noopener noreferrer" className="hover:underline">urtdigital</a>
+                        Design by <a href="https://www.ortisoft.com.tr" target="_blank" rel="noopener noreferrer" className="hover:underline">Ortisoft</a>
                     </p>
                 </div>
             </div>
