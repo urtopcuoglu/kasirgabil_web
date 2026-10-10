@@ -42,7 +42,7 @@ export default function AdminKabuk({ email, children }: Props) {
             {/* Kenar menü */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[var(--color-secondary)] text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
+                    "fixed inset-y-0 left-0 z-40 flex w-64 flex-col print:hidden bg-[var(--color-secondary)] text-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0",
                     menuAcik ? "translate-x-0" : "-translate-x-full"
                 )}
             >
@@ -118,7 +118,7 @@ export default function AdminKabuk({ email, children }: Props) {
 
             {/* İçerik */}
             <div className="flex min-w-0 flex-1 flex-col">
-                <header className="sticky top-0 z-20 flex items-center gap-3 border-b bg-white px-4 py-3 lg:hidden">
+                <header className="sticky top-0 z-20 flex items-center gap-3 border-b bg-white px-4 py-3 lg:hidden print:hidden">
                     <button
                         type="button"
                         aria-label="Menüyü aç"
@@ -130,7 +130,7 @@ export default function AdminKabuk({ email, children }: Props) {
                     <span className="font-semibold text-[var(--color-secondary)]">Kasırga Admin</span>
                 </header>
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 print:p-0">{children}</main>
             </div>
         </div>
     );
