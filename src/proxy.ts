@@ -3,7 +3,7 @@
 // - Admin alan adı (ADMIN_HOST, örn. admin.kasirgabilgisayar.com): kök adres panele gider, vitrin sayfaları ana siteye yönlenir.
 // - Ana alan adında /admin istekleri admin alan adına taşınır.
 // - /admin altında oturum yenilenir ve giriş kontrolü yapılır (vitrin sayfaları Supabase'e istek atmaz).
-// ADMIN_HOST / SITE_URL tanımlı değilse (yerel geliştirme) alan adı yönlendirmesi yapılmaz.
+// ADMIN_HOST / SITE_URL tanımlı değilse (yerel geliştirme) ya da Vercel önizlemesindeyse alan adı yönlendirmesi yapılmaz.
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
@@ -13,8 +13,10 @@ export async function proxy(request: NextRequest) {
     const siteUrl = process.env.SITE_URL;
     const host = request.headers.get("host")?.split(":")[0];
     const adminYolu = pathname === "/admin" || pathname.startsWith("/admin/");
+    // Vercel önizlemelerinde (VERCEL_ENV=preview) alan adı yönlendirmesi yapılmaz; panel önizleme adresinde /admin'de açılır.
+    const onizleme = (process.env.VERCEL_ENV ?? process.env.NEXT_PUBLIC_VERCEL_ENV) === "preview";
 
-    if (adminHost && siteUrl) {
+    if (adminHost && siteUrl && !onizleme) {
         if (host === adminHost && !adminYolu) {
             if (pathname === "/") return NextResponse.redirect(new URL("/admin", request.url));
             return NextResponse.redirect(new URL(pathname + search, siteUrl));
