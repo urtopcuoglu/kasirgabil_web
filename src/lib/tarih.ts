@@ -42,3 +42,17 @@ export function sonrakiGunBasi(gun: string) {
 export function bugunISO() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: SAAT_DILIMI }).format(new Date());
 }
+
+// "2026-10-10" + n gün → "2026-10-11" (saat diliminden bağımsız).
+export function gunEkle(gun: string, n: number) {
+    const d = new Date(`${gun}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+// "2026-10-10" → "10 Ekim 2026 Cumartesi"
+export function uzunTarihYaz(gun: string) {
+    return new Intl.DateTimeFormat("tr-TR", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric", weekday: "long" }).format(
+        new Date(`${gun}T00:00:00Z`)
+    );
+}

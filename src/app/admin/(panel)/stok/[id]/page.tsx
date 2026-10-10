@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Pencil, Wallet } from "lucide-react";
 import { urunSil } from "@/actions/stok";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -76,6 +76,11 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
                 <Button variant="outline" asChild>
                     <Link href="/admin/stok">
                         <ArrowLeft /> Stok
+                    </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                    <Link href={`/admin/kasa?urun=${u.id}`}>
+                        <Wallet /> Kasada Sat
                     </Link>
                 </Button>
                 <Button variant="outline" asChild>

@@ -2,12 +2,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil, Printer } from "lucide-react";
+import { ArrowLeft, Pencil, Printer, Wallet } from "lucide-react";
 import { servisSil } from "@/actions/servis";
+import { servisKalani } from "@/lib/kasa";
 import { createClient } from "@/lib/supabase/server";
+import { ODEME_YONTEMLERI, type KasaHareketi } from "@/lib/schemas/kasa";
 import { SERVIS_DURUMLARI, type DurumGecmisi, type ServisKalemi, type ServisKaydi } from "@/lib/schemas/servis";
 import type { Personel } from "@/lib/schemas/personel";
-import { tarihSaatYaz, tarihYaz } from "@/lib/tarih";
+import { paraYaz, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, SayfaBasligi } from "../../../_components/form";
@@ -25,6 +27,7 @@ type Detay = ServisKaydi & {
     cihaz: { servisler: Pick<ServisKaydi, "id" | "form_no" | "giris_tarihi" | "durum">[] } | null;
     servis_durum_gecmisi: DurumGecmisi[];
     servis_kalemleri: ServisKalemi[];
+    kasa_hareketleri: Pick<KasaHareketi, "id" | "tarih" | "tip" | "yontem" | "tutar">[];
 };
 
 export default async function ServisDetaySayfasi({ params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +36,7 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
     const { data } = await supabase
         .from("teknik_servis_kayitlari")
         .select(
-            "*, personel(ad_soyad), cihaz:cihazlar(servisler:teknik_servis_kayitlari(id, form_no, giris_tarihi, durum)), servis_durum_gecmisi(id, durum, aciklama, created_at), servis_kalemleri(*)"
+            "*, personel(ad_soyad), cihaz:cihazlar(servisler:teknik_servis_kayitlari(id, form_no, giris_tarihi, durum)), servis_durum_gecmisi(id, durum, aciklama, created_at), servis_kalemleri(*), kasa_hareketleri(id, tarih, tip, yontem, tutar)"
         )
         .eq("id", id)
         .order("created_at", { referencedTable: "servis_durum_gecmisi", ascending: false })
@@ -127,6 +130,10 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                     <BilgiKarti baslik="Ücret Kalemleri">
                         <KalemTablosu servisId={k.id} kalemler={k.servis_kalemleri} />
                     </BilgiKarti>
+
+                    <BilgiKarti baslik="Ödemeler">
+                        <OdemeOzeti servis={k} />
+                    </BilgiKarti>
                 </div>
 
                 {/* Sağ: durum ve tarih bilgileri */}
@@ -166,6 +173,52 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                     </BilgiKarti>
                 </div>
             </div>
+        </div>
+    );
+}
+
+// Ücret kalemleri toplamı, kasaya girilen tahsilatlar ve kalan tutar.
+function OdemeOzeti({ servis }: { servis: Detay }) {
+    const { toplam, odenen, kalan } = servisKalani(servis);
+    const odemeler = servis.kasa_hareketleri.toSorted((a, b) => a.tarih.localeCompare(b.tarih));
+
+    return (
+        <div className="space-y-3">
+            <dl className="grid grid-cols-3 gap-2 text-center text-sm">
+                <div className="rounded-md bg-gray-50 p-2">
+                    <dt className="text-xs text-gray-500">Toplam</dt>
+                    <dd className="font-semibold tabular-nums">{paraYaz(toplam)}</dd>
+                </div>
+                <div className="rounded-md bg-gray-50 p-2">
+                    <dt className="text-xs text-gray-500">Ödenen</dt>
+                    <dd className="font-semibold tabular-nums text-green-700">{paraYaz(odenen)}</dd>
+                </div>
+                <div className="rounded-md bg-gray-50 p-2">
+                    <dt className="text-xs text-gray-500">Kalan</dt>
+                    <dd className={cn("font-semibold tabular-nums", kalan > 0 && "text-[var(--color-primary)]")}>{paraYaz(kalan)}</dd>
+                </div>
+            </dl>
+            {odemeler.length > 0 && (
+                <ul className="divide-y text-sm">
+                    {odemeler.map((o) => (
+                        <li key={o.id} className="flex justify-between gap-2 py-1.5">
+                            <Link href={`/admin/kasa?tarih=${o.tarih}`} className="text-gray-600 hover:underline">
+                                {tarihYaz(o.tarih)} · {ODEME_YONTEMLERI[o.yontem]}
+                                {o.tip === "gider" && " · İade"}
+                            </Link>
+                            <span className={cn("tabular-nums", o.tip === "gider" && "text-[var(--color-primary)]")}>
+                                {o.tip === "gider" ? "−" : ""}
+                                {paraYaz(Number(o.tutar))}
+                            </span>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            <Button variant="outline" size="sm" asChild>
+                <Link href={`/admin/kasa?servis=${servis.id}`}>
+                    <Wallet /> Tahsilat Gir
+                </Link>
+            </Button>
         </div>
     );
 }
