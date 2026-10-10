@@ -6,11 +6,9 @@ import { Loader2, LogIn } from "lucide-react";
 import { girisYap, type GirisDurumu } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { anaButonSinifi, FormHatasi, inputSinifi } from "../_components/form";
 
 const baslangic: GirisDurumu = {};
-
-const inputSinifi =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none transition focus:border-[var(--color-secondary)] focus:ring-2 focus:ring-[var(--color-secondary)]/20";
 
 export default function GirisFormu() {
     const [durum, formAction, bekliyor] = useActionState(girisYap, baslangic);
@@ -42,17 +40,9 @@ export default function GirisFormu() {
                 />
             </div>
 
-            {durum.hata && (
-                <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-[var(--color-primary)]">
-                    {durum.hata}
-                </p>
-            )}
+            <FormHatasi mesaj={durum.hata} />
 
-            <Button
-                type="submit"
-                disabled={bekliyor}
-                className="w-full bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary)]/90"
-            >
+            <Button type="submit" disabled={bekliyor} className={`w-full ${anaButonSinifi}`}>
                 {bekliyor ? <Loader2 className="animate-spin" /> : <LogIn />}
                 {bekliyor ? "Giriş yapılıyor..." : "Giriş Yap"}
             </Button>
