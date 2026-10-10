@@ -11,7 +11,8 @@ import type { RehberKisi } from "@/lib/schemas/rehber";
 import { tarihSaatYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { Alan, anaButonSinifi, FormHatasi, inputSinifi } from "../../../_components/form";
-import KargoFisi, { A5YazdirmaStili, type KargoFisiVerisi } from "../KargoFisi";
+import { A5YazdirmaStili } from "../../../_components/A5";
+import KargoFisi, { type KargoFisiVerisi } from "../KargoFisi";
 import YeniGondericiKarti from "./YeniGondericiKarti";
 
 export type AliciSecenegi = Pick<RehberKisi, "id" | "ad_soyad_unvan" | "firma" | "telefon_1" | "telefon_2"> & {

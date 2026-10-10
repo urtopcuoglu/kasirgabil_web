@@ -5,7 +5,7 @@ import { ArrowRight, CalendarCheck, CalendarPlus, Eye, Plus, Search } from "luci
 import { createClient } from "@/lib/supabase/server";
 import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { ODEME_TIPLERI, type Kargo, type KargoGonderici } from "@/lib/schemas/kargo";
-import { tarihSaatYaz, tarihYaz } from "@/lib/tarih";
+import { gunBasi, sonrakiGunBasi, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, FormHatasi, inputSinifi, SayfaBasligi } from "../../_components/form";
@@ -52,16 +52,7 @@ function orIlikeDegeri(q: string) {
     return `"%${likeGuvenli.replace(/["\\]/g, (k) => `\\${k}`)}%"`;
 }
 
-// Türkiye sabit UTC+3 olduğu için gün sınırları bu ofsetle hesaplanır.
-function gunBasi(gun: string) {
-    return `${gun}T00:00:00+03:00`;
-}
 
-function sonrakiGunBasi(gun: string) {
-    const d = new Date(`${gun}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 1);
-    return gunBasi(d.toISOString().slice(0, 10));
-}
 
 export default async function KargolarSayfasi({ searchParams }: Props) {
     const p = await searchParams;

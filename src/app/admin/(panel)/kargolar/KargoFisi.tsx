@@ -2,6 +2,7 @@
 // A5 yatay (210 × 148 mm) kargo gönderi formu. Önizleme, detay sayfası ve yazdırmada aynı bileşen kullanılır.
 import Image from "next/image";
 import { ODEME_TIPLERI, type OdemeTipi } from "@/lib/schemas/kargo";
+import { A5Sayfa } from "../../_components/A5";
 
 export type KargoFisiVerisi = {
     gonderici: {
@@ -27,7 +28,7 @@ export default function KargoFisi({ veri }: { veri: KargoFisiVerisi }) {
     const gondericiAdiFarkli = veri.gonderici.gonderici_adi !== veri.gonderici.firma_adi;
 
     return (
-        <div className="kargo-fisi mx-auto flex h-[148mm] w-[210mm] shrink-0 flex-col overflow-hidden bg-white p-[7mm] text-black shadow-lg [print-color-adjust:exact] print:shadow-none">
+        <A5Sayfa>
             {/* Başlık: logo | form adı, tarih, no | ödeme tipi */}
             <div className="flex items-center gap-[5mm] border-b-2 border-[var(--color-secondary)] pb-[3mm]">
                 <Image src="/logo/logo.png" alt="Kasırga Bilgisayar" width={150} height={50} loading="eager" className="h-[12mm] w-auto" />
@@ -77,7 +78,7 @@ export default function KargoFisi({ veri }: { veri: KargoFisiVerisi }) {
             <p className="mt-[2.5mm] text-center text-[7pt] text-gray-500">
                 Kasırga Bilgisayar · Güvenin Başkenti
             </p>
-        </div>
+        </A5Sayfa>
     );
 }
 
@@ -92,7 +93,3 @@ function Satir({ etiket, deger, kalin }: { etiket: string; deger: string; kalin?
     );
 }
 
-// Bu bileşeni içeren sayfada yazdırma A5 yatay ve kenar boşluksuz yapılır.
-export function A5YazdirmaStili() {
-    return <style>{`@page { size: A5 landscape; margin: 0; }`}</style>;
-}

@@ -21,7 +21,7 @@ export type MenuOgesi = {
 
 export const menuOgeleri: MenuOgesi[] = [
     { href: "/admin", etiket: "Özet", ikon: LayoutDashboard, hazir: true },
-    { href: "/admin/teknik-servis", etiket: "Teknik Servis", ikon: Wrench, hazir: false },
+    { href: "/admin/teknik-servis", etiket: "Teknik Servis", ikon: Wrench, hazir: true },
     { href: "/admin/rehber", etiket: "Rehber", ikon: BookUser, hazir: true },
     { href: "/admin/kargolar", etiket: "Kargolar", ikon: Truck, hazir: true },
     { href: "/admin/stok", etiket: "Stok", ikon: Package, hazir: false },

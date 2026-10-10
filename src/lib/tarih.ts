@@ -20,6 +20,24 @@ export function tarihYaz(gun: string) {
     return `${gunNo}.${ay}.${yil}`;
 }
 
+// Para tutarı → "1.250,00 ₺"
+export function paraYaz(tutar: number) {
+    return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(tutar);
+}
+
+// Tarih aralığı filtreleri için gün sınırları. Türkiye sabit UTC+3 olduğu için bu ofset kullanılır.
+// "2026-10-10" → "2026-10-10T00:00:00+03:00"
+export function gunBasi(gun: string) {
+    return `${gun}T00:00:00+03:00`;
+}
+
+// Bitiş tarihini dahil etmek için ertesi günün başlangıcı ("<" ile kullanılır).
+export function sonrakiGunBasi(gun: string) {
+    const d = new Date(`${gun}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    return gunBasi(d.toISOString().slice(0, 10));
+}
+
 // Bugünün tarihi Türkiye saatine göre "YYYY-MM-DD".
 export function bugunISO() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: SAAT_DILIMI }).format(new Date());

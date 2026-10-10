@@ -22,7 +22,12 @@ export async function rehberKisiKaydet(id: string | null, girdi: RehberKisiGirdi
         ? await supabase.from("rehber_kisiler").update(veri).eq("id", id)
         : await supabase.from("rehber_kisiler").insert(veri);
 
-    if (error) return { hata: dbHataMesaji(error) };
+    if (error) {
+        // rehber_kisiler'deki tek unique kısıt telefon_1'in son 10 hanesidir.
+        return {
+            hata: error.code === "23505" ? "Bu telefon numarası rehberde başka bir kişiye kayıtlı." : dbHataMesaji(error),
+        };
+    }
 
     revalidatePath("/admin/rehber");
     redirect("/admin/rehber");

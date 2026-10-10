@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, FormHatasi, inputSinifi, SayfaBasligi } from "../../_components/form";
 import {
+    aramaDeseni,
     FiltreOzeti,
     FiltreSecimi,
     GorunumSecici,
@@ -42,12 +43,6 @@ const SIRALAMALAR = {
 } as const;
 type Siralama = keyof typeof SIRALAMALAR;
 
-// Kullanıcının yazdığı metni ilike desenine çevirir. Sadece rakam/telefon karakterleri
-// içeriyorsa boşluklar atılır, böylece "0532 123" ve "0532123" aynı sonucu verir.
-function aramaDeseni(q: string) {
-    const temiz = /^[\d\s()+-]+$/.test(q) ? q.replace(/\D/g, "") : q;
-    return `%${temiz.replace(/[\\%_]/g, (k) => `\\${k}`)}%`;
-}
 
 export default async function RehberSayfasi({ searchParams }: Props) {
     const p = await searchParams;

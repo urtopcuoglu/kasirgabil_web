@@ -24,7 +24,14 @@ export function secenekOku<T extends string>(deger: string | undefined, izinli: 
     return izinli.includes(deger as T) ? (deger as T) : varsayilan;
 }
 
-export const uuidMi = (deger?: string) => !!deger && /^[0-9a-f-]{36}$/i.test(deger);
+// Kullanıcının yazdığı metni "arama" sütunu için ilike desenine çevirir. Sadece rakam/telefon
+// karakterleri içeriyorsa boşluklar atılır, böylece "0532 123" ve "0532123" aynı sonucu verir.
+export function aramaDeseni(q: string) {
+    const temiz = /^[\d\s()+-]+$/.test(q) ? q.replace(/\D/g, "") : q;
+    return `%${temiz.replace(/[\\%_]/g, (k) => `\\${k}`)}%`;
+}
+
+export const uuidMi =(deger?: string) => !!deger && /^[0-9a-f-]{36}$/i.test(deger);
 export const tarihMi = (deger?: string) => !!deger && /^\d{4}-\d{2}-\d{2}$/.test(deger);
 
 // ─── Görünüm seçici (ikonlu iki parçalı anahtar) ────────────

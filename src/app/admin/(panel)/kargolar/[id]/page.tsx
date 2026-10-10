@@ -11,9 +11,10 @@ import { tarihSaatYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { SayfaBasligi } from "../../../_components/form";
 import SilButonu from "../../../_components/SilButonu";
-import KargoFisi, { A5YazdirmaStili } from "../KargoFisi";
+import { A5YazdirmaStili } from "../../../_components/A5";
+import KargoFisi from "../KargoFisi";
 import OdemeTipiRozeti from "../OdemeTipiRozeti";
-import { OtomatikYazdir, YazdirButonu } from "./Yazdir";
+import { OtomatikYazdir, YazdirButonu } from "../../../_components/Yazdir";
 import VerilisTarihiFormu from "./VerilisTarihiFormu";
 
 export const metadata: Metadata = {

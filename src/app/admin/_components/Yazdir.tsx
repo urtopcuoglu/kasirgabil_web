@@ -1,11 +1,11 @@
-// src/app/admin/(panel)/kargolar/[id]/Yazdir.tsx
+// src/app/admin/_components/Yazdir.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { anaButonSinifi } from "../../../_components/form";
+import { anaButonSinifi } from "./form";
 
 export function YazdirButonu() {
     return (
