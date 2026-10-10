@@ -1,5 +1,7 @@
 // src/app/admin/(panel)/stok/[id]/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Wallet } from "lucide-react";
@@ -41,6 +43,7 @@ const sayi = (v: number | string | null) => (v == null ? null : Number(v));
 export default async function UrunDetaySayfasi({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await createClient();
+    const o = await oturum();
     const [{ data }, { data: kategoriData }] = await Promise.all([
         supabase
             .from("urunler")
@@ -78,21 +81,27 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
                         <ArrowLeft /> Stok
                     </Link>
                 </Button>
+{izinVar(o?.rol, "kasa") && (
                 <Button variant="outline" asChild>
                     <Link href={`/admin/kasa?urun=${u.id}`}>
                         <Wallet /> Kasada Sat
                     </Link>
                 </Button>
+)}
+{izinVar(o?.rol, "stok_yonet") && (
                 <Button variant="outline" asChild>
                     <Link href={`/admin/stok/${u.id}/duzenle`}>
                         <Pencil /> Düzenle
                     </Link>
                 </Button>
+)}
+{izinVar(o?.rol, "stok_yonet") && (
                 <SilButonu
                     onay={`${u.stok_kodu} - "${u.ad}" stok hareketleriyle birlikte silinsin mi? Bu işlem geri alınamaz.`}
                     sil={urunSil.bind(null, u.id)}
                     etiket="Sil"
                 />
+)}
             </SayfaBasligi>
 
             <div className="grid gap-4 lg:grid-cols-3">
@@ -160,7 +169,15 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
                             <StokAdedi adet={u.stok_adedi} />
                             {u.stok_adedi > 0 && <span className="ml-1 text-sm text-gray-500">adet</span>}
                         </p>
+                        {u.min_stok != null && (
+                            <p className={cn("-mt-3 mb-4 text-xs", u.kritik ? "font-medium text-[var(--color-primary)]" : "text-gray-500")}>
+                                Minimum stok: {u.min_stok}
+                                {u.kritik && " · kritik seviyede"}
+                            </p>
+                        )}
+{izinVar(o?.rol, "stok_hareket") && (
                         <StokPaneli urunId={u.id} stokAdedi={u.stok_adedi} />
+)}
                     </BilgiKarti>
 
                     <BilgiKarti baslik="Stok Hareketleri">

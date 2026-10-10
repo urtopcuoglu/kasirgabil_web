@@ -10,9 +10,10 @@ import KutuFormu from "../KutuFormu";
 type Props = {
     kutu: Kutu;
     kutular: Pick<Kutu, "id" | "kutu_no" | "marka" | "model">[];
+    duzenlenebilir: boolean;
 };
 
-export default function KutuDuzenle({ kutu, kutular }: Props) {
+export default function KutuDuzenle({ kutu, kutular, duzenlenebilir }: Props) {
     const [duzenleniyor, setDuzenleniyor] = useState(false);
 
     if (duzenleniyor) return <KutuFormu kutu={kutu} kutular={kutular} bitti={() => setDuzenleniyor(false)} />;
@@ -38,9 +39,11 @@ export default function KutuDuzenle({ kutu, kutular }: Props) {
                         )
                 )}
             </dl>
-            <Button variant="outline" size="sm" onClick={() => setDuzenleniyor(true)}>
-                <Pencil /> Düzenle
-            </Button>
+            {duzenlenebilir && (
+                <Button variant="outline" size="sm" onClick={() => setDuzenleniyor(true)}>
+                    <Pencil /> Düzenle
+                </Button>
+            )}
         </div>
     );
 }

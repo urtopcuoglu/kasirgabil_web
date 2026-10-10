@@ -1,9 +1,10 @@
 // src/app/admin/(panel)/stok/kutular/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { ChevronDown, Eye, PackagePlus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import type { Kutu } from "@/lib/schemas/stok";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ type KutuSatiri = Kutu & { urunler: { count: number }[] };
 export default async function KutularSayfasi({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
     const q = ((await searchParams).q ?? "").trim();
     const supabase = await createClient();
+    const o = await oturum();
 
     let sorgu = supabase.from("kutular").select("*, urunler(count)").order("kutu_no", { ascending: false });
     if (q) sorgu = sorgu.ilike("arama", aramaDeseni(q));
@@ -41,6 +43,7 @@ export default async function KutularSayfasi({ searchParams }: { searchParams: P
 
             <StokSekmeleri aktif="/admin/stok/kutular" />
 
+            {izinVar(o?.rol, "stok_yonet") && (
             <details className="group mb-4 rounded-xl border bg-white shadow-sm" open={kutular.length === 0 && !q}>
                 <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-semibold text-[var(--color-secondary)]">
                     <PackagePlus className="size-4" /> Yeni Kutu Aç
@@ -50,6 +53,7 @@ export default async function KutularSayfasi({ searchParams }: { searchParams: P
                     <KutuFormu kutular={tumKutular ?? []} />
                 </div>
             </details>
+            )}
 
             <form action="/admin/stok/kutular" className="mb-3 flex gap-2 rounded-xl border bg-white p-3 shadow-sm">
                 <div className="relative flex-1">

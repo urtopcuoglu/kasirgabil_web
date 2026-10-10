@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { personelSemasi, type PersonelGirdisi } from "@/lib/schemas/personel";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci, oturum } from "@/lib/supabase/yetkili";
 
 export type IslemSonucu = { hata: string } | undefined;
 
@@ -13,8 +13,14 @@ export async function personelKaydet(id: string | null, girdi: PersonelGirdisi):
     const sonuc = personelSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("personel");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
+
+    // Yönetici kendi rolünü düşürür ya da kaydını pasif yaparsa panele erişimini kaybeder.
+    if (id && id === (await oturum())?.personelId && (sonuc.data.rol !== "yonetici" || !sonuc.data.aktif)) {
+        return { hata: "Kendi rolünüzü değiştiremez veya kaydınızı pasif yapamazsınız." };
+    }
 
     const veri = bosIseNull(sonuc.data);
     const { error } = id
@@ -28,8 +34,10 @@ export async function personelKaydet(id: string | null, girdi: PersonelGirdisi):
 }
 
 export async function personelSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("personel");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
+    if (id === (await oturum())?.personelId) return { hata: "Kendi personel kaydınızı silemezsiniz." };
 
     const { error } = await supabase.from("personel").delete().eq("id", id);
     if (error) {

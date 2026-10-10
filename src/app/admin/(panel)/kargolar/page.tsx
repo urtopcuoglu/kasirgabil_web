@@ -13,9 +13,12 @@ import {
     FiltreOzeti,
     FiltreSecimi,
     FiltreTarihi,
-    GorunumSecici,
     gorunumOku,
+    GorunumSecici,
     linkOlustur,
+    sayfaAraligi,
+    Sayfalama,
+    sayfaOku,
     secenekOku,
     tarihMi,
     uuidMi,
@@ -30,6 +33,7 @@ export const metadata: Metadata = {
 type Props = {
     searchParams: Promise<{
         q?: string;
+        sayfa?: string;
         gonderici?: string;
         odeme?: string;
         durum?: string;
@@ -40,7 +44,6 @@ type Props = {
     }>;
 };
 
-const LIMIT = 200;
 const ODEME_SECENEKLERI = ["", "UA", "GO"] as const;
 const DURUMLAR = ["", "bekliyor", "verildi"] as const;
 const SIRALAMALAR = ["yeni", "eski"] as const;
@@ -56,6 +59,7 @@ function orIlikeDegeri(q: string) {
 
 export default async function KargolarSayfasi({ searchParams }: Props) {
     const p = await searchParams;
+    const sayfa = sayfaOku(p.sayfa);
     const q = (p.q ?? "").trim();
     // Elle bozulmuş bir URL veritabanı hatasına yol açmasın diye değerler doğrulanarak okunur.
     const gonderici = uuidMi(p.gonderici) ? p.gonderici : undefined;
@@ -82,9 +86,9 @@ export default async function KargolarSayfasi({ searchParams }: Props) {
 
     let sorgu = supabase
         .from("kargolar")
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: sirala === "eski" })
-        .limit(LIMIT);
+        .range(...sayfaAraligi(sayfa));
 
     if (q) {
         const v = orIlikeDegeri(q);
@@ -105,6 +109,7 @@ export default async function KargolarSayfasi({ searchParams }: Props) {
     ]);
 
     const kargolar = (kargolarSonucu.data ?? []) as Kargo[];
+    const toplam = kargolarSonucu.count ?? 0;
     const gondericiler = (gondericilerSonucu.data ?? []) as Pick<KargoGonderici, "id" | "firma_adi" | "gonderici_adi">[];
     const hata = kargolarSonucu.error ?? gondericilerSonucu.error;
 
@@ -193,7 +198,7 @@ export default async function KargolarSayfasi({ searchParams }: Props) {
             </OtomatikFiltreFormu>
 
             <FiltreOzeti
-                sonucSayisi={kargolar.length}
+                sonucSayisi={toplam}
                 aktifFiltre={aktifFiltre}
                 temizleLinki={linkOlustur("/admin/kargolar", { gorunum: gorunum === "kart" ? "kart" : undefined })}
             />
@@ -224,11 +229,11 @@ export default async function KargolarSayfasi({ searchParams }: Props) {
                     <KargoTablosu kargolar={kargolar} />
                 ))}
 
-            {kargolar.length === LIMIT && (
-                <p className="mt-4 text-center text-xs text-gray-500">
-                    İlk {LIMIT} kargo gösteriliyor. Daha fazlası için filtreleri daraltın.
-                </p>
-            )}
+            <Sayfalama
+                sayfa={sayfa}
+                toplam={toplam}
+                link={(n) => linkOlustur("/admin/kargolar", { ...filtreler, gorunum: gorunum === "kart" ? "kart" : undefined, sayfa: n > 1 ? String(n) : undefined })}
+            />
         </div>
     );
 }

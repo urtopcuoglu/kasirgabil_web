@@ -11,7 +11,7 @@ import {
     type KargoGonderici,
     type KargoOlusturGirdisi,
 } from "@/lib/schemas/kargo";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 
 export async function gondericiEkle(
@@ -99,8 +99,9 @@ export async function kargoyaVerilisTarihiKaydet(id: string, tarih: string): Pro
 
 // listeyeDon: detay sayfasından silinirken kullanılır; silinen kaydın sayfasında kalınmaz.
 export async function kargoSil(id: string, listeyeDon = false): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("sil");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("kargolar").delete().eq("id", id);
     if (error) return { hata: dbHataMesaji(error) };

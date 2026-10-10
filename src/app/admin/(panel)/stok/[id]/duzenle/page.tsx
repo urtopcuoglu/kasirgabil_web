@@ -1,5 +1,6 @@
 // src/app/admin/(panel)/stok/[id]/duzenle/page.tsx
 import type { Metadata } from "next";
+import { izinGerekli } from "@/lib/supabase/yetkili";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { urunFormuVerisi } from "@/lib/stok";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function UrunDuzenleSayfasi({ params }: { params: Promise<{ id: string }> }) {
+    await izinGerekli("stok_yonet");
     const { id } = await params;
     const supabase = await createClient();
     const [{ data }, veri] = await Promise.all([

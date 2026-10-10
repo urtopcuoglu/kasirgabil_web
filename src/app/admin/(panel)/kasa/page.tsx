@@ -1,11 +1,12 @@
 // src/app/admin/(panel)/kasa/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { kasaHareketiSil } from "@/actions/kasa";
 import { tekBaglanti } from "@/lib/kasa";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import {
     kasaOzeti,
     ODEME_YONTEMLERI,
@@ -48,6 +49,7 @@ export default async function KasaSayfasi({ searchParams }: Props) {
     const gelecekGun = tarih > bugun;
 
     const supabase = await createClient();
+    const o = await oturum();
     const [kategoriSonucu, hareketSonucu, gunSonucu, acilisSonucu, beklenenSonucu, oncekiKapanis, gecmisSonucu, servis, urun] =
         await Promise.all([
             supabase.from("kasa_kategorileri").select("id, ad, tip, kod, sistem").order("ad"),
@@ -177,10 +179,10 @@ export default async function KasaSayfasi({ searchParams }: Props) {
                                                                 <Pencil />
                                                             </Link>
                                                         </Button>
-                                                        <SilButonu
+                                                        {izinVar(o?.rol, "kasa_yonet") && <SilButonu
                                                             onay={`${paraYaz(Number(h.tutar))} tutarındaki ${h.tip} hareketi silinsin mi?${h.urunler ? " Ürünün stoğu geri alınır." : ""}`}
                                                             sil={kasaHareketiSil.bind(null, h.id)}
-                                                        />
+                                                        />}
                                                     </td>
                                                 )}
                                             </tr>
@@ -229,7 +231,7 @@ export default async function KasaSayfasi({ searchParams }: Props) {
                     </Kart>
 
                     <Kart baslik="Gün Sonu">
-                        <GunSonuPaneli tarih={tarih} gun={gun} beklenenNakit={beklenen} gelecekGun={gelecekGun} />
+                        <GunSonuPaneli tarih={tarih} gun={gun} beklenenNakit={beklenen} gelecekGun={gelecekGun} yenidenAcabilir={izinVar(o?.rol, "kasa_yonet")} />
                     </Kart>
 
                     {!!gecmisSonucu.count && (

@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const GIRIS_YOLU = "/admin/giris";
+const HESAP_YOLU = "/admin/hesabim";
 
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({ request });
@@ -48,6 +49,15 @@ export async function updateSession(request: NextRequest) {
     if (girisYapmis && girisSayfasi) {
         const url = request.nextUrl.clone();
         url.pathname = "/admin";
+        url.search = "";
+        return yonlendir(url, response);
+    }
+
+    // Yöneticinin verdiği geçici şifreyle giren kullanıcı, kendi şifresini belirleyene kadar Hesabım sayfasında kalır.
+    const sifreDegismeli = (data?.claims?.user_metadata as { sifre_degismeli?: boolean } | undefined)?.sifre_degismeli === true;
+    if (sifreDegismeli && pathname !== HESAP_YOLU) {
+        const url = request.nextUrl.clone();
+        url.pathname = HESAP_YOLU;
         url.search = "";
         return yonlendir(url, response);
     }

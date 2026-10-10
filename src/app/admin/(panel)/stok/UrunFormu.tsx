@@ -76,6 +76,7 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
             tedarikci_id: urun?.tedarikci_id ?? "",
             aciklama: urun?.aciklama ?? "",
             stok_adedi: urun ? "" : "1",
+            min_stok: metin(urun?.min_stok),
             satis_fiyati: metin(urun?.satis_fiyati),
             alis_fiyati: metin(urun?.alis_fiyati),
             kdv_orani: urun?.kdv_orani ? String(urun.kdv_orani) : "",
@@ -221,6 +222,10 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                     </Alan>
                     <Alan etiket="Barkod / GTIN" htmlFor="barkod" hata={errors.barkod?.message}>
                         <input id="barkod" autoComplete="off" inputMode="numeric" className={inputSinifi} {...register("barkod")} />
+                    </Alan>
+                    <Alan etiket="Minimum Stok" htmlFor="min_stok" hata={errors.min_stok?.message}>
+                        <input id="min_stok" inputMode="numeric" placeholder="Boş: uyarı yok" className={inputSinifi} {...register("min_stok")} />
+                        <p className="text-xs text-gray-500">Stok bu sayıya inince özet sayfasında kritik stok uyarısı çıkar.</p>
                     </Alan>
                     {!urun && (
                         <Alan etiket="Başlangıç Stok Adedi" htmlFor="stok_adedi" hata={errors.stok_adedi?.message}>

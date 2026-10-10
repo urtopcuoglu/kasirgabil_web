@@ -1,7 +1,7 @@
 // src/app/admin/_components/liste.tsx
 // Liste sayfalarında (rehber, kargolar...) ortak kullanılan filtre ve görünüm parçaları.
 import Link from "next/link";
-import { LayoutGrid, List, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { inputSinifi } from "./form";
 
@@ -109,5 +109,54 @@ export function FiltreOzeti({ sonucSayisi, aktifFiltre, temizleLinki }: { sonucS
                 </Link>
             )}
         </div>
+    );
+}
+
+// ─── Sayfalama ──────────────────────────────────────────────
+
+export const SAYFA_BOYUTU = 50;
+
+export const sayfaOku = (deger?: string) => Math.max(1, Number.parseInt(deger ?? "1", 10) || 1);
+
+// Supabase .range() için sayfanın ilk ve son satır indeksi.
+export const sayfaAraligi = (sayfa: number): [number, number] => [(sayfa - 1) * SAYFA_BOYUTU, sayfa * SAYFA_BOYUTU - 1];
+
+// Filtreler korunarak sayfa linki üretilir; 1. sayfa URL'e yazılmaz.
+export function Sayfalama({ sayfa, toplam, link }: { sayfa: number; toplam: number; link: (sayfa: number) => string }) {
+    const sayfaSayisi = Math.ceil(toplam / SAYFA_BOYUTU);
+    if (sayfaSayisi <= 1) return null;
+    const ilk = (sayfa - 1) * SAYFA_BOYUTU + 1;
+    const son = Math.min(sayfa * SAYFA_BOYUTU, toplam);
+    const dugme = "inline-flex items-center gap-1 rounded-md border bg-white px-3 py-1.5 text-sm shadow-sm hover:bg-gray-50";
+
+    return (
+        <nav aria-label="Sayfalar" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+            <span className="text-xs text-gray-500">
+                {ilk}–{son} / {toplam} kayıt
+            </span>
+            <div className="flex items-center gap-2">
+                {sayfa > 1 ? (
+                    <Link href={link(sayfa - 1)} className={dugme}>
+                        <ChevronLeft className="size-4" /> Önceki
+                    </Link>
+                ) : (
+                    <span className={cn(dugme, "pointer-events-none opacity-40")}>
+                        <ChevronLeft className="size-4" /> Önceki
+                    </span>
+                )}
+                <span className="px-1 tabular-nums text-gray-600">
+                    {sayfa} / {sayfaSayisi}
+                </span>
+                {sayfa < sayfaSayisi ? (
+                    <Link href={link(sayfa + 1)} className={dugme}>
+                        Sonraki <ChevronRight className="size-4" />
+                    </Link>
+                ) : (
+                    <span className={cn(dugme, "pointer-events-none opacity-40")}>
+                        Sonraki <ChevronRight className="size-4" />
+                    </span>
+                )}
+            </div>
+        </nav>
     );
 }

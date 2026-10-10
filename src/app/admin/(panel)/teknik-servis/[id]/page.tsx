@@ -1,5 +1,7 @@
 // src/app/admin/(panel)/teknik-servis/[id]/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Pencil, Printer, Wallet } from "lucide-react";
@@ -33,6 +35,7 @@ type Detay = ServisKaydi & {
 export default async function ServisDetaySayfasi({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await createClient();
+    const o = await oturum();
     const { data } = await supabase
         .from("teknik_servis_kayitlari")
         .select(
@@ -57,21 +60,25 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                         <ArrowLeft /> Teknik Servis
                     </Link>
                 </Button>
+{izinVar(o?.rol, "servis_yaz") && (
                 <Button variant="outline" asChild>
                     <Link href={`/admin/teknik-servis/${k.id}/duzenle`}>
                         <Pencil /> Düzenle
                     </Link>
                 </Button>
+)}
                 <Button asChild className={anaButonSinifi}>
                     <Link href={`/admin/teknik-servis/${k.id}/yazdir`}>
                         <Printer /> Yazdır
                     </Link>
                 </Button>
+{izinVar(o?.rol, "sil") && (
                 <SilButonu
                     onay={`#${k.form_no} numaralı servis kaydı; durum geçmişi ve ücret kalemleriyle birlikte silinsin mi? Bu işlem geri alınamaz.`}
                     sil={servisSil.bind(null, k.id)}
                     etiket="Sil"
                 />
+)}
             </SayfaBasligi>
 
             <div className="grid gap-4 lg:grid-cols-3">
@@ -128,12 +135,14 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                     </BilgiKarti>
 
                     <BilgiKarti baslik="Ücret Kalemleri">
-                        <KalemTablosu servisId={k.id} kalemler={k.servis_kalemleri} />
+                        <KalemTablosu servisId={k.id} kalemler={k.servis_kalemleri} duzenlenebilir={izinVar(o?.rol, "servis_yaz")} />
                     </BilgiKarti>
 
+{izinVar(o?.rol, "kasa") && (
                     <BilgiKarti baslik="Ödemeler">
                         <OdemeOzeti servis={k} />
                     </BilgiKarti>
+)}
                 </div>
 
                 {/* Sağ: durum ve tarih bilgileri */}
@@ -142,7 +151,9 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                         <div className="mb-4">
                             <DurumRozeti durum={k.durum} buyuk />
                         </div>
+{izinVar(o?.rol, "servis_yaz") && (
                         <DurumPaneli servisId={k.id} mevcutDurum={k.durum} />
+)}
                     </BilgiKarti>
 
                     <BilgiKarti baslik="Tarihler">

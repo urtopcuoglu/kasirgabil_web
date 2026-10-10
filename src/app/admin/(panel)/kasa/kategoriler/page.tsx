@@ -1,7 +1,7 @@
 // src/app/admin/(panel)/kasa/kategoriler/page.tsx
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
+import { dbHataMesaji, izinGerekli } from "@/lib/supabase/yetkili";
 import { HAREKET_TIPLERI, type KasaKategori, type KasaTipi } from "@/lib/schemas/kasa";
 import { FormHatasi, SayfaBasligi } from "../../../_components/form";
 import KasaSekmeleri from "../KasaSekmeleri";
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 type KategoriSatiri = KasaKategori & { kasa_hareketleri: { count: number }[] };
 
 export default async function KasaKategorileriSayfasi() {
+    await izinGerekli("kasa_yonet");
     const supabase = await createClient();
     const { data, error } = await supabase
         .from("kasa_kategorileri")

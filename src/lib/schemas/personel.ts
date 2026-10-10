@@ -31,6 +31,7 @@ export type Personel = {
     rol: Rol;
     aktif: boolean;
     auth_user_id: string | null;
+    sistem_hesabi: boolean; // geliştirici gibi operasyonda yer almayan hesap; seçim listelerinde görünmez
     created_at: string;
     updated_at: string;
 };

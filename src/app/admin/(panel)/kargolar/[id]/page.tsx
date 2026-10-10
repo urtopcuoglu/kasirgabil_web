@@ -1,6 +1,8 @@
 // src/app/admin/(panel)/kargolar/[id]/page.tsx
 // Kargo detayı (cargo-detail). Yazdırıldığında sadece A5 fiş kağıda çıkar.
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -29,6 +31,7 @@ type Props = {
 export default async function KargoDetaySayfasi({ params, searchParams }: Props) {
     const [{ id }, { yazdir }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
+    const o = await oturum();
     const { data } = await supabase.from("kargolar").select("*").eq("id", id).maybeSingle();
 
     if (!data) notFound();
@@ -48,11 +51,13 @@ export default async function KargoDetaySayfasi({ params, searchParams }: Props)
                         </Link>
                     </Button>
                     <YazdirButonu />
+{izinVar(o?.rol, "sil") && (
                     <SilButonu
                         onay="Bu kargo kaydı silinsin mi?"
                         sil={kargoSil.bind(null, kargo.id, true)}
                         etiket="Sil"
                     />
+)}
                 </SayfaBasligi>
 
                 <div className="grid gap-4 lg:grid-cols-3">

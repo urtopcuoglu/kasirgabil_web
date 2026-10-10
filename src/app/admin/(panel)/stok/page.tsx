@@ -1,16 +1,17 @@
 // src/app/admin/(panel)/stok/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Eye, Plus, ScanBarcode } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { kategoriAgaci, URUN_DURUMLARI, type Kutu, type Urun, type UrunKategori } from "@/lib/schemas/stok";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, FormHatasi, inputSinifi, SayfaBasligi } from "../../_components/form";
-import { aramaDeseni, FiltreOzeti, FiltreSecimi, linkOlustur, secenekOku, uuidMi } from "../../_components/liste";
+import { aramaDeseni, FiltreOzeti, FiltreSecimi, linkOlustur, sayfaAraligi, Sayfalama, sayfaOku, secenekOku, uuidMi } from "../../_components/liste";
 import OtomatikFiltreFormu from "../../_components/OtomatikFiltreFormu";
 import StokSekmeleri from "./StokSekmeleri";
 import { DurumRozeti, StokAdedi } from "./UrunRozetleri";
@@ -20,14 +21,13 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ q?: string; kategori?: string; durum?: string; stok?: string; sirala?: string }>;
+    searchParams: Promise<{ q?: string; sayfa?: string; kategori?: string; durum?: string; stok?: string; sirala?: string }>;
 };
 
 type UrunSatiri = Urun & { kutular: Pick<Kutu, "kutu_no" | "marka" | "model"> | null };
 
-const LIMIT = 300;
 const DURUM_FILTRELERI = ["", "sifir", "ikinci_el"] as const;
-const STOK_FILTRELERI = ["", "var", "yok"] as const;
+const STOK_FILTRELERI = ["", "var", "yok", "kritik"] as const;
 const SIRALAMALAR = {
     yeni: { etiket: "En yeni eklenen", sutun: "created_at", artan: false },
     kod: { etiket: "Stok kodu", sutun: "stok_kodu", artan: true },
@@ -38,6 +38,7 @@ type Siralama = keyof typeof SIRALAMALAR;
 
 export default async function StokSayfasi({ searchParams }: Props) {
     const p = await searchParams;
+    const sayfa = sayfaOku(p.sayfa);
     const q = (p.q ?? "").trim();
     const kategori = uuidMi(p.kategori) ? p.kategori : undefined;
     const durum = secenekOku(p.durum, DURUM_FILTRELERI, "");
@@ -54,6 +55,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
     const aktifFiltre = Object.values(filtreler).filter(Boolean).length;
 
     const supabase = await createClient();
+    const o = await oturum();
 
     // Barkod okuyucu / elle tam kod: stok kodu, barkod veya seri no tek ürüne denk geliyorsa doğrudan ürüne gidilir.
     // Yalnızca harf/rakam/nokta/tire içeren aramalarda denenir (PostgREST filtre sözdizimi bozulmasın).
@@ -73,27 +75,31 @@ export default async function StokSayfasi({ searchParams }: Props) {
     const { sutun, artan } = SIRALAMALAR[sirala];
     let sorgu = supabase
         .from("urunler")
-        .select("*, kutular(kutu_no, marka, model)")
+        .select("*, kutular(kutu_no, marka, model)", { count: "exact" })
         .order(sutun, { ascending: artan })
-        .limit(LIMIT);
+        .range(...sayfaAraligi(sayfa));
 
     if (q) sorgu = sorgu.ilike("arama", aramaDeseni(q));
     if (kategori) sorgu = sorgu.in("kategori_id", agac.altlariyla(kategori));
     if (durum) sorgu = sorgu.eq("durum", durum);
     if (stok === "var") sorgu = sorgu.gt("stok_adedi", 0);
     if (stok === "yok") sorgu = sorgu.eq("stok_adedi", 0);
+    if (stok === "kritik") sorgu = sorgu.eq("kritik", true);
 
-    const { data, error } = await sorgu;
+    const { data, error, count } = await sorgu;
+    const toplam = count ?? 0;
     const urunler = (data ?? []) as UrunSatiri[];
 
     return (
         <div>
             <SayfaBasligi baslik="Stok" aciklama="Ürünler, notebook yedek parça kutuları ve stok hareketleri.">
+{izinVar(o?.rol, "stok_yonet") && (
                 <Button asChild className={anaButonSinifi}>
                     <Link href="/admin/stok/yeni">
                         <Plus /> Yeni Ürün
                     </Link>
                 </Button>
+)}
             </SayfaBasligi>
 
             <StokSekmeleri aktif="/admin/stok" />
@@ -144,6 +150,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
                         { deger: "", etiket: "Tümü" },
                         { deger: "var", etiket: "Stokta olanlar" },
                         { deger: "yok", etiket: "Stokta olmayanlar" },
+                        { deger: "kritik", etiket: "Kritik stok" },
                     ]}
                 />
                 <FiltreSecimi
@@ -154,7 +161,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
                 />
             </OtomatikFiltreFormu>
 
-            <FiltreOzeti sonucSayisi={urunler.length} aktifFiltre={aktifFiltre} temizleLinki={linkOlustur("/admin/stok", {})} />
+            <FiltreOzeti sonucSayisi={toplam} aktifFiltre={aktifFiltre} temizleLinki={linkOlustur("/admin/stok", {})} />
 
             {error && <FormHatasi mesaj={dbHataMesaji(error)} />}
 
@@ -201,6 +208,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-right">
                                         <StokAdedi adet={u.stok_adedi} />
+                                        {u.kritik && <p className="text-[10px] font-semibold uppercase text-[var(--color-primary)]">Kritik</p>}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                                         {u.satis_fiyati != null ? paraYaz(Number(u.satis_fiyati)) : <span className="text-gray-400">—</span>}
@@ -219,11 +227,11 @@ export default async function StokSayfasi({ searchParams }: Props) {
                 </div>
             )}
 
-            {urunler.length === LIMIT && (
-                <p className="mt-4 text-center text-xs text-gray-500">
-                    İlk {LIMIT} ürün gösteriliyor. Daha fazlası için filtreleri daraltın.
-                </p>
-            )}
+            <Sayfalama
+                sayfa={sayfa}
+                toplam={toplam}
+                link={(n) => linkOlustur("/admin/stok", { ...filtreler, sayfa: n > 1 ? String(n) : undefined })}
+            />
         </div>
     );
 }

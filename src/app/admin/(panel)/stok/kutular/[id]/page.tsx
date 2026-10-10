@@ -1,5 +1,7 @@
 // src/app/admin/(panel)/stok/kutular/[id]/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Eye, Plus } from "lucide-react";
@@ -24,6 +26,7 @@ type Detay = Kutu & {
 export default async function KutuDetaySayfasi({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const supabase = await createClient();
+    const o = await oturum();
     const [{ data }, { data: tumKutular }] = await Promise.all([
         supabase
             .from("kutular")
@@ -45,12 +48,14 @@ export default async function KutuDetaySayfasi({ params }: { params: Promise<{ i
                         <ArrowLeft /> Kutular
                     </Link>
                 </Button>
+                {izinVar(o?.rol, "stok_yonet") && (
                 <Button asChild className={anaButonSinifi}>
                     <Link href={`/admin/stok/yeni?kutu=${k.id}`}>
                         <Plus /> Bu Kutuya Parça Ekle
                     </Link>
                 </Button>
-                {k.urunler.length === 0 && (
+                )}
+                {k.urunler.length === 0 && izinVar(o?.rol, "stok_yonet") && (
                     <SilButonu onay={`Kutu ${k.kutu_no} (${k.marka} ${k.model}) silinsin mi?`} sil={kutuSil.bind(null, k.id)} etiket="Sil" />
                 )}
             </SayfaBasligi>
@@ -101,7 +106,7 @@ export default async function KutuDetaySayfasi({ params }: { params: Promise<{ i
 
                 <section className="rounded-xl border bg-white p-5 shadow-sm">
                     <h2 className="mb-3 font-semibold text-[var(--color-secondary)]">Kutu Bilgileri</h2>
-                    <KutuDuzenle kutu={k} kutular={tumKutular ?? []} />
+                    <KutuDuzenle kutu={k} kutular={tumKutular ?? []} duzenlenebilir={izinVar(o?.rol, "stok_yonet")} />
                 </section>
             </div>
         </div>

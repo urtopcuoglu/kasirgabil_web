@@ -12,7 +12,7 @@ import {
     type ServisDurumu,
     type ServisGirdisi,
 } from "@/lib/schemas/servis";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci, yetkiliIstemci } from "@/lib/supabase/yetkili";
 import { aramaDeseni } from "@/app/admin/_components/liste";
 import { cihazlariSirala, MUSTERI_SECIMI } from "@/lib/musteri";
 import type { IslemSonucu } from "./personel";
@@ -51,8 +51,9 @@ export async function servisKaydet(id: string | null, girdi: ServisGirdisi): Pro
     const sonuc = servisSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("servis_yaz");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const veri = bosIseNull(sonuc.data);
     let hedefId = id;
@@ -71,8 +72,9 @@ export async function servisKaydet(id: string | null, girdi: ServisGirdisi): Pro
 }
 
 export async function servisSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("sil");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     // Durum geçmişi ve ücret kalemleri cascade ile birlikte silinir.
     const { error } = await supabase.from("teknik_servis_kayitlari").delete().eq("id", id);
@@ -86,8 +88,9 @@ export async function servisDurumDegistir(id: string, durum: ServisDurumu, acikl
     const sonuc = durumDegistirSemasi.safeParse({ durum, aciklama });
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("servis_yaz");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.rpc("servis_durum_degistir", {
         p_servis_id: id,
@@ -107,8 +110,9 @@ export async function kalemKaydet(servisId: string, kalemId: string | null, gird
     const sonuc = kalemSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("servis_yaz");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = kalemId
         ? await supabase.from("servis_kalemleri").update(sonuc.data).eq("id", kalemId).eq("servis_id", servisId)
@@ -121,8 +125,9 @@ export async function kalemKaydet(servisId: string, kalemId: string | null, gird
 }
 
 export async function kalemSil(servisId: string, kalemId: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("servis_yaz");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("servis_kalemleri").delete().eq("id", kalemId).eq("servis_id", servisId);
     if (error) return { hata: dbHataMesaji(error) };

@@ -4,7 +4,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { rehberKategoriSemasi, rehberKisiSemasi, type RehberKisiGirdisi } from "@/lib/schemas/rehber";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 
 // ─── Kişiler ────────────────────────────────────────────────
@@ -34,8 +34,9 @@ export async function rehberKisiKaydet(id: string | null, girdi: RehberKisiGirdi
 }
 
 export async function rehberKisiSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("sil");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("rehber_kisiler").delete().eq("id", id);
     if (error) return { hata: dbHataMesaji(error) };
@@ -64,8 +65,9 @@ export async function rehberKategoriKaydet(id: string | null, ad: string): Promi
 }
 
 export async function rehberKategoriSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("sil");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     // Kategorideki kişiler silinmez; kategorileri boşaltılır (on delete set null).
     const { error } = await supabase.from("rehber_kategorileri").delete().eq("id", id);

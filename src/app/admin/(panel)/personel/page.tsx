@@ -1,7 +1,7 @@
 // src/app/admin/(panel)/personel/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Pencil, Plus } from "lucide-react";
+import { KeyRound, Pencil, Plus } from "lucide-react";
 import { personelSil } from "@/actions/personel";
 import { createClient } from "@/lib/supabase/server";
 import { dbHataMesaji } from "@/lib/supabase/yetkili";
@@ -27,7 +27,7 @@ export default async function PersonelSayfasi() {
 
     return (
         <div>
-            <SayfaBasligi baslik="Personel" aciklama="Servis ve kasa kayıtlarında seçilecek personel listesi.">
+            <SayfaBasligi baslik="Personel" aciklama="Personel listesi, roller ve panel girişleri.">
                 <Button asChild className={anaButonSinifi}>
                     <Link href="/admin/personel/yeni">
                         <Plus /> Yeni Personel
@@ -52,13 +52,21 @@ export default async function PersonelSayfasi() {
                                 <th className="px-4 py-3 font-medium">Telefon</th>
                                 <th className="px-4 py-3 font-medium">Rol</th>
                                 <th className="px-4 py-3 font-medium">Durum</th>
+                                <th className="px-4 py-3 font-medium">Panel Girişi</th>
                                 <th className="px-4 py-3" />
                             </tr>
                         </thead>
                         <tbody className="divide-y">
                             {personeller.map((p) => (
                                 <tr key={p.id} className={cn(!p.aktif && "text-gray-400")}>
-                                    <td className="whitespace-nowrap px-4 py-3 font-medium">{p.ad_soyad}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 font-medium">
+                                        {p.ad_soyad}
+                                        {p.sistem_hesabi && (
+                                            <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-gray-500">
+                                                Sistem
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className="whitespace-nowrap px-4 py-3">
                                         {p.telefon ? (
                                             <a href={`tel:${p.telefon}`} className="hover:underline">
@@ -80,16 +88,27 @@ export default async function PersonelSayfasi() {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3">
+                                        {p.auth_user_id ? (
+                                            <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                                                <KeyRound className="size-3.5" /> Var
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs text-gray-400">Yok</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">
                                         <div className="flex justify-end gap-1">
                                             <Button variant="ghost" size="icon" asChild title="Düzenle">
                                                 <Link href={`/admin/personel/${p.id}`} aria-label="Düzenle">
                                                     <Pencil />
                                                 </Link>
                                             </Button>
-                                            <SilButonu
-                                                onay={`"${p.ad_soyad}" silinsin mi?`}
-                                                sil={personelSil.bind(null, p.id)}
-                                            />
+                                            {!p.sistem_hesabi && (
+                                                <SilButonu
+                                                    onay={`"${p.ad_soyad}" silinsin mi?${p.auth_user_id ? " Panel girişi de çalışmaz hale gelir." : ""}`}
+                                                    sil={personelSil.bind(null, p.id)}
+                                                />
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

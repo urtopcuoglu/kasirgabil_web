@@ -14,7 +14,7 @@ import {
     type UrunKategori,
 } from "@/lib/schemas/stok";
 import { sayiOku } from "@/lib/schemas/ortak";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 
 const STOK = "/admin/stok";
@@ -38,8 +38,9 @@ export async function kategoriKaydet(id: string | null, ustId: string | null, ad
     const sonuc = kategoriSemasi.safeParse({ ad });
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = id
         ? await supabase.from("urun_kategorileri").update(sonuc.data).eq("id", id)
@@ -55,8 +56,9 @@ export async function kategoriEkle(ustId: string | null, ad: string): Promise<{ 
     const sonuc = kategoriSemasi.safeParse({ ad });
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { data, error } = await supabase
         .from("urun_kategorileri")
@@ -71,8 +73,9 @@ export async function kategoriEkle(ustId: string | null, ad: string): Promise<{ 
 }
 
 export async function kategoriKutuSistemi(id: string, acik: boolean): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("urun_kategorileri").update({ kutu_sistemi: acik }).eq("id", id);
     if (error) return { hata: dbHataMesaji(error) };
@@ -81,8 +84,9 @@ export async function kategoriKutuSistemi(id: string, acik: boolean): Promise<Is
 }
 
 export async function kategoriSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("urun_kategorileri").delete().eq("id", id);
     if (error) {
@@ -106,8 +110,9 @@ export async function kutuKaydet(id: string | null, girdi: KutuGirdisi): Promise
     const sonuc = kutuSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const veri = bosIseNull({ ...sonuc.data, kutu_no: Number(sonuc.data.kutu_no) });
 
@@ -126,8 +131,9 @@ export async function kutuKaydet(id: string | null, girdi: KutuGirdisi): Promise
 }
 
 export async function kutuSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("kutular").delete().eq("id", id);
     if (error) return { hata: error.code === "23503" ? "İçinde ürün olan kutu silinemez." : dbHataMesaji(error) };
@@ -148,8 +154,9 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
     const sonuc = urunSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const d = sonuc.data;
     const veri = {
@@ -172,6 +179,7 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
         komisyon_tutari: sayiOku(d.komisyon_tutari),
         kargo_desi: sayiOku(d.kargo_desi),
         kargo_ucreti: sayiOku(d.kargo_ucreti),
+        min_stok: sayiOku(d.min_stok),
     };
 
     let hedefId = id;
@@ -194,8 +202,9 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
 }
 
 export async function urunSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     // Stok hareketleri cascade ile birlikte silinir.
     const { error } = await supabase.from("urunler").delete().eq("id", id);
@@ -217,8 +226,9 @@ export async function stokHareketiEkle(
     const sonuc = stokHareketiSemasi.safeParse({ tip, miktar, aciklama });
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("stok_hareket");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     let fark: number;
     if (sonuc.data.tip === "sayim") {

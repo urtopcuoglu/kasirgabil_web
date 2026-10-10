@@ -24,9 +24,10 @@ import SilButonu from "../../../_components/SilButonu";
 type Props = {
     servisId: string;
     kalemler: ServisKalemi[];
+    duzenlenebilir: boolean; // rolün servis_yaz izni yoksa yalnızca görüntülenir
 };
 
-export default function KalemTablosu({ servisId, kalemler }: Props) {
+export default function KalemTablosu({ servisId, kalemler, duzenlenebilir }: Props) {
     const [duzenlenenId, setDuzenlenenId] = useState<string | null>(null);
     const toplam = kalemToplamlari(kalemler);
 
@@ -63,6 +64,7 @@ export default function KalemTablosu({ servisId, kalemler }: Props) {
                                     <td className="px-2 py-2 text-right">{paraYaz(sayi(kalem.birim_fiyat))}</td>
                                     <td className="px-2 py-2 text-right font-medium">{paraYaz(sayi(kalem.tutar))}</td>
                                     <td className="px-5 py-2">
+                                        {duzenlenebilir && (
                                         <div className="flex justify-end gap-1">
                                             <Button
                                                 type="button"
@@ -79,11 +81,12 @@ export default function KalemTablosu({ servisId, kalemler }: Props) {
                                                 sil={kalemSil.bind(null, servisId, kalem.id)}
                                             />
                                         </div>
+                                        )}
                                     </td>
                                 </tr>
                             )
                         )}
-                        {duzenlenenId === null && <KalemSatirFormu servisId={servisId} />}
+                        {duzenlenebilir && duzenlenenId === null && <KalemSatirFormu servisId={servisId} />}
                     </tbody>
                 </table>
             </div>

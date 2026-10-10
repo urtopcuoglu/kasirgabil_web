@@ -12,7 +12,7 @@ import {
     type BlogYazisiGirdisi,
     type SiteIcerikAnahtari,
 } from "@/lib/schemas/icerik";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 
 const ICERIK = "/admin/icerik";
@@ -31,8 +31,9 @@ export async function siteIcerigiKaydet(anahtar: SiteIcerikAnahtari, deger: unkn
     if (typeof veri.icerik === "string") veri.icerik = htmlTemizle(veri.icerik);
     if (typeof veri.biz_kimiz === "string") veri.biz_kimiz = htmlTemizle(veri.biz_kimiz);
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("icerik");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("site_icerikleri").update({ deger: veri }).eq("anahtar", anahtar);
     if (error) return { hata: dbHataMesaji(error) };
@@ -51,8 +52,9 @@ export async function blogYazisiKaydet(id: string | null, girdi: BlogYazisiGirdi
     const sonuc = blogYazisiSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("icerik");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const d = sonuc.data;
     const veri = {
@@ -86,8 +88,9 @@ export async function blogYazisiKaydet(id: string | null, girdi: BlogYazisiGirdi
 }
 
 export async function blogYazisiSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("icerik");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("blog_yazilari").delete().eq("id", id);
     if (error) return { hata: dbHataMesaji(error) };
@@ -106,8 +109,9 @@ export async function blogKategoriKaydet(id: string | null, ad: string): Promise
     const slug = slugUret(sonuc.data.ad);
     if (!slug) return { hata: "Kategori adında harf veya rakam olmalı." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("icerik");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const veri = { ad: sonuc.data.ad, slug };
     const { error } = id
@@ -120,8 +124,9 @@ export async function blogKategoriKaydet(id: string | null, ad: string): Promise
 }
 
 export async function blogKategoriSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("icerik");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     // Kategorideki yazılar silinmez, kategorisiz kalır (on delete set null).
     const { error } = await supabase.from("blog_kategorileri").delete().eq("id", id);

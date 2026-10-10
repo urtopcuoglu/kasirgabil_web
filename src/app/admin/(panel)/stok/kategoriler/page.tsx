@@ -1,7 +1,7 @@
 // src/app/admin/(panel)/stok/kategoriler/page.tsx
 import type { Metadata } from "next";
+import { dbHataMesaji, izinGerekli } from "@/lib/supabase/yetkili";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import type { UrunKategori } from "@/lib/schemas/stok";
 import { FormHatasi, SayfaBasligi } from "../../../_components/form";
 import StokSekmeleri from "../StokSekmeleri";
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 type KategoriSatiri = UrunKategori & { urunler: { count: number }[] };
 
 export default async function UrunKategorileriSayfasi() {
+    await izinGerekli("stok_yonet");
     const supabase = await createClient();
     const { data, error } = await supabase.from("urun_kategorileri").select("id, ad, ust_id, kutu_sistemi, urunler(count)");
     const kategoriler = (data ?? []) as KategoriSatiri[];

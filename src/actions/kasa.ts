@@ -13,7 +13,7 @@ import {
     type KasaTipi,
 } from "@/lib/schemas/kasa";
 import { sayiOku } from "@/lib/schemas/ortak";
-import { bosIseNull, dbHataMesaji, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 
 const KASA = "/admin/kasa";
@@ -34,8 +34,9 @@ export async function kasaHareketiKaydet(id: string | null, girdi: KasaHareketiG
     const sonuc = kasaHareketiSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const d = sonuc.data;
     const veri = {
@@ -64,8 +65,9 @@ export async function kasaHareketiKaydet(id: string | null, girdi: KasaHareketiG
 }
 
 export async function kasaHareketiSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     // Ürün bağlantısı varsa stok, veritabanındaki trigger ile geri alınır.
     const { error } = await supabase.from("kasa_hareketleri").delete().eq("id", id);
@@ -77,9 +79,9 @@ export async function kasaHareketiSil(id: string): Promise<IslemSonucu> {
 // Formdaki servis / ürün / rehber arama seçicileri.
 export async function baglantiAra(tur: BaglantiTuru, q: string): Promise<BaglantiSecenegi[]> {
     if (q.trim().length < 2) return [];
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return [];
-    return baglantiSecenekleri(supabase, tur, { q: q.trim() });
+    const yetki = await izinliIstemci("kasa");
+    if ("hata" in yetki) return [];
+    return baglantiSecenekleri(yetki.supabase, tur, { q: q.trim() });
 }
 
 // ─── Gün sonu ───────────────────────────────────────────────
@@ -89,8 +91,9 @@ export async function kasaGunKapat(tarih: string, sayilan: string, not: string):
     if (!tarihMi(tarih)) return { hata: "Geçersiz tarih." };
     if (tutar == null || Number.isNaN(tutar) || tutar < 0) return { hata: "Kasada sayılan nakit tutarını girin." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.rpc("kasa_gun_kapat", { p_tarih: tarih, p_sayilan: tutar, p_not: not });
     if (error) return { hata: dbHataMesaji(error) };
@@ -101,8 +104,9 @@ export async function kasaGunKapat(tarih: string, sayilan: string, not: string):
 export async function kasaGunAc(tarih: string): Promise<IslemSonucu> {
     if (!tarihMi(tarih)) return { hata: "Geçersiz tarih." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.rpc("kasa_gun_ac", { p_tarih: tarih });
     if (error) return { hata: dbHataMesaji(error) };
@@ -116,8 +120,9 @@ export async function kasaAcilisNakitKaydet(tarih: string, tutarMetni: string): 
     if (!tarihMi(tarih)) return { hata: "Geçersiz tarih." };
     if (tutar == null || Number.isNaN(tutar) || tutar < 0) return { hata: "Geçerli bir tutar girin." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { count } = await supabase
         .from("kasa_gunleri")
@@ -138,8 +143,9 @@ export async function kasaKategoriKaydet(id: string | null, ad: string, tip: Kas
     const sonuc = kasaKategoriSemasi.safeParse({ ad, tip });
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = id
         ? await supabase.from("kasa_kategorileri").update({ ad: sonuc.data.ad }).eq("id", id)
@@ -150,8 +156,9 @@ export async function kasaKategoriKaydet(id: string | null, ad: string, tip: Kas
 }
 
 export async function kasaKategoriSil(id: string): Promise<IslemSonucu> {
-    const supabase = await yetkiliIstemci();
-    if (!supabase) return { hata: OTURUM_HATASI };
+    const yetki = await izinliIstemci("kasa_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
 
     const { error } = await supabase.from("kasa_kategorileri").delete().eq("id", id);
     if (error) return { hata: error.code === "23503" ? "Hareketi olan kategori silinemez." : dbHataMesaji(error) };

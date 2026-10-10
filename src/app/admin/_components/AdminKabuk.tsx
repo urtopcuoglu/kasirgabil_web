@@ -5,17 +5,21 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, LogOut, Menu, X } from "lucide-react";
+import { ExternalLink, LogOut, Menu, UserCog, X } from "lucide-react";
 import { cikisYap } from "@/actions/auth";
+import { izinVar } from "@/lib/izinler";
+import { ROLLER, type Rol } from "@/lib/schemas/personel";
 import { cn } from "@/lib/utils";
 import { menuOgeleri } from "./menu";
 
 type Props = {
     email: string;
+    ad: string | null;
+    rol: Rol | null;
     children: React.ReactNode;
 };
 
-export default function AdminKabuk({ email, children }: Props) {
+export default function AdminKabuk({ email, ad, rol, children }: Props) {
     const pathname = usePathname();
     const [menuAcik, setMenuAcik] = useState(false);
 
@@ -61,8 +65,9 @@ export default function AdminKabuk({ email, children }: Props) {
                 </div>
 
                 <nav className="flex-1 space-y-1 overflow-y-auto px-3">
-                    {menuOgeleri.map(({ href, etiket, ikon: Ikon, hazir }) =>
-                        hazir ? (
+                    {menuOgeleri
+                        .filter((m) => !m.izin || izinVar(rol, m.izin))
+                        .map(({ href, etiket, ikon: Ikon }) => (
                             <Link
                                 key={href}
                                 href={href}
@@ -76,20 +81,7 @@ export default function AdminKabuk({ email, children }: Props) {
                                 <Ikon className="size-4" />
                                 {etiket}
                             </Link>
-                        ) : (
-                            <span
-                                key={href}
-                                aria-disabled="true"
-                                className="flex cursor-not-allowed items-center gap-3 rounded-md px-3 py-2 text-sm text-white/40"
-                            >
-                                <Ikon className="size-4" />
-                                {etiket}
-                                <span className="ml-auto rounded bg-white/10 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-                                    Yakında
-                                </span>
-                            </span>
-                        )
-                    )}
+                        ))}
                 </nav>
 
                 <div className="space-y-1 border-t border-white/10 px-3 py-4">
@@ -101,9 +93,22 @@ export default function AdminKabuk({ email, children }: Props) {
                         <ExternalLink className="size-4" />
                         Siteyi Görüntüle
                     </Link>
-                    <p className="truncate px-3 pt-2 text-xs text-white/50" title={email}>
-                        {email}
-                    </p>
+                    <Link
+                        href="/admin/hesabim"
+                        className={cn(
+                            "flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-white/10 hover:text-white",
+                            aktifMi("/admin/hesabim") ? "bg-white/10 text-white" : "text-white/80"
+                        )}
+                    >
+                        <UserCog className="size-4" />
+                        Hesabım
+                    </Link>
+                    <div className="px-3 pt-2 text-xs">
+                        <p className="truncate font-medium text-white/80" title={email}>
+                            {ad ?? email}
+                        </p>
+                        {rol && <p className="text-white/50">{ROLLER[rol]}</p>}
+                    </div>
                     <form action={cikisYap}>
                         <button
                             type="submit"

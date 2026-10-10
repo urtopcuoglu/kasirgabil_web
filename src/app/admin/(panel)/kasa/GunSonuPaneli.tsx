@@ -17,9 +17,10 @@ type Props = {
     gun: KasaGunu | null;
     beklenenNakit: number;
     gelecekGun: boolean;
+    yenidenAcabilir: boolean; // yalnızca yönetici
 };
 
-export default function GunSonuPaneli({ tarih, gun, beklenenNakit, gelecekGun }: Props) {
+export default function GunSonuPaneli({ tarih, gun, beklenenNakit, gelecekGun, yenidenAcabilir }: Props) {
     const [sayilan, setSayilan] = useState("");
     const [not, setNot] = useState("");
     const [hata, setHata] = useState<string>();
@@ -52,9 +53,9 @@ export default function GunSonuPaneli({ tarih, gun, beklenenNakit, gelecekGun }:
                 </dl>
                 {gun.kapanis_notu && <p className="rounded-md bg-gray-50 p-2 text-xs text-gray-600">{gun.kapanis_notu}</p>}
                 <FormHatasi mesaj={hata} />
-                <Button variant="outline" size="sm" disabled={bekliyor} onClick={() => calistir(() => kasaGunAc(tarih))}>
+                {yenidenAcabilir && <Button variant="outline" size="sm" disabled={bekliyor} onClick={() => calistir(() => kasaGunAc(tarih))}>
                     {bekliyor ? <Loader2 className="animate-spin" /> : <LockOpen />} Günü yeniden aç
-                </Button>
+                </Button>}
             </div>
         );
     }

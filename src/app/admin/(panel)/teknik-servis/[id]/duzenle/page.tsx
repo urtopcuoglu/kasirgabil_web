@@ -1,5 +1,6 @@
 // src/app/admin/(panel)/teknik-servis/[id]/duzenle/page.tsx
 import type { Metadata } from "next";
+import { izinGerekli } from "@/lib/supabase/yetkili";
 import { notFound } from "next/navigation";
 import { musteriGetir } from "@/lib/musteri";
 import { createClient } from "@/lib/supabase/server";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ServisDuzenleSayfasi({ params }: { params: Promise<{ id: string }> }) {
+    await izinGerekli("servis_yaz");
     const { id } = await params;
     const supabase = await createClient();
     const { data } = await supabase.from("teknik_servis_kayitlari").select("*").eq("id", id).maybeSingle();
@@ -25,6 +27,7 @@ export default async function ServisDuzenleSayfasi({ params }: { params: Promise
             .from("personel")
             .select("id, ad_soyad, aktif")
             .or(`aktif.eq.true,id.eq.${kayit.teslim_alan_personel_id}`)
+            .eq("sistem_hesabi", false)
             .order("ad_soyad"),
         musteriGetir(supabase, kayit.musteri_id),
     ]);

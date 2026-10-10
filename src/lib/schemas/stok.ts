@@ -118,6 +118,8 @@ export const urunSemasi = z.object({
     aciklama: opsiyonelMetin(2000),
     // Yalnızca yeni kayıtta kullanılır (ilk giriş hareketi).
     stok_adedi: opsiyonelSayi({ max: 100000, tamSayi: true }),
+    // Stok bu sayıya inince özet sayfasında kritik stok uyarısı verilir (boşsa uyarı yok).
+    min_stok: opsiyonelSayi({ max: 100000, tamSayi: true }),
     satis_fiyati: opsiyonelSayi({ max: 99999999 }),
     alis_fiyati: opsiyonelSayi({ max: 99999999 }),
     kdv_orani: z.union([z.literal(""), z.enum(KDV_ORANLARI.map(String) as [string, ...string[]])]),
@@ -150,6 +152,8 @@ export type Urun = {
     kargo_desi: number | null;
     kargo_ucreti: number | null;
     stok_adedi: number;
+    min_stok: number | null;
+    kritik: boolean;
     created_at: string;
     updated_at: string;
 };

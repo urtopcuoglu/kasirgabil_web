@@ -1,10 +1,11 @@
 // src/app/admin/(panel)/rehber/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { Building2, Mail, MapPin, Pencil, Phone, Plus, Search, Tags, Truck } from "lucide-react";
 import { rehberKisiSil } from "@/actions/rehber";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { TEDARIKCI_KODU, type RehberKategori, type RehberKisi } from "@/lib/schemas/rehber";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,9 +14,12 @@ import {
     aramaDeseni,
     FiltreOzeti,
     FiltreSecimi,
-    GorunumSecici,
     gorunumOku,
+    GorunumSecici,
     linkOlustur,
+    sayfaAraligi,
+    Sayfalama,
+    sayfaOku,
     secenekOku,
     uuidMi,
 } from "../../_components/liste";
@@ -27,12 +31,11 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ q?: string; kategori?: string; adres?: string; sirala?: string; gorunum?: string }>;
+    searchParams: Promise<{ q?: string; sayfa?: string; kategori?: string; adres?: string; sirala?: string; gorunum?: string }>;
 };
 
 type KisiSatiri = RehberKisi & { rehber_kategorileri: Pick<RehberKategori, "ad" | "kod"> | null };
 
-const LIMIT = 200;
 
 const ADRES_SECENEKLERI = ["", "var", "yok"] as const;
 const SIRALAMALAR = {
@@ -46,6 +49,7 @@ type Siralama = keyof typeof SIRALAMALAR;
 
 export default async function RehberSayfasi({ searchParams }: Props) {
     const p = await searchParams;
+    const sayfa = sayfaOku(p.sayfa);
     const q = (p.q ?? "").trim();
     // Elle bozulmuş bir URL veritabanı hatasına yol açmasın diye değerler doğrulanarak okunur.
     const kategori = uuidMi(p.kategori) ? p.kategori : undefined;
@@ -63,13 +67,14 @@ export default async function RehberSayfasi({ searchParams }: Props) {
     const aktifFiltre = [filtreler.q, filtreler.kategori, filtreler.adres, filtreler.sirala].filter(Boolean).length;
 
     const supabase = await createClient();
+    const o = await oturum();
     const { sutun, artan } = SIRALAMALAR[sirala];
 
     let sorgu = supabase
         .from("rehber_kisiler")
-        .select("*, rehber_kategorileri(ad, kod)")
+        .select("*, rehber_kategorileri(ad, kod)", { count: "exact" })
         .order(sutun, { ascending: artan })
-        .limit(LIMIT);
+        .range(...sayfaAraligi(sayfa));
 
     if (q) sorgu = sorgu.ilike("arama", aramaDeseni(q));
     if (kategori) sorgu = sorgu.eq("kategori_id", kategori);
@@ -82,6 +87,7 @@ export default async function RehberSayfasi({ searchParams }: Props) {
     ]);
 
     const kisiler = (kisilerSonucu.data ?? []) as KisiSatiri[];
+    const toplam = kisilerSonucu.count ?? 0;
     const kategoriler = (kategorilerSonucu.data ?? []) as RehberKategori[];
     const hata = kisilerSonucu.error ?? kategorilerSonucu.error;
 
@@ -155,7 +161,7 @@ export default async function RehberSayfasi({ searchParams }: Props) {
             </OtomatikFiltreFormu>
 
             <FiltreOzeti
-                sonucSayisi={kisiler.length}
+                sonucSayisi={toplam}
                 aktifFiltre={aktifFiltre}
                 temizleLinki={linkOlustur("/admin/rehber", { gorunum: gorunum === "kart" ? "kart" : undefined })}
             />
@@ -172,18 +178,18 @@ export default async function RehberSayfasi({ searchParams }: Props) {
                 (gorunum === "kart" ? (
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {kisiler.map((k) => (
-                            <KisiKarti key={k.id} kisi={k} />
+                            <KisiKarti key={k.id} kisi={k} silebilir={izinVar(o?.rol, "sil")} />
                         ))}
                     </div>
                 ) : (
-                    <KisiTablosu kisiler={kisiler} />
+                    <KisiTablosu kisiler={kisiler} silebilir={izinVar(o?.rol, "sil")} />
                 ))}
 
-            {kisiler.length === LIMIT && (
-                <p className="mt-4 text-center text-xs text-gray-500">
-                    İlk {LIMIT} kayıt gösteriliyor. Daha fazlası için filtreleri daraltın.
-                </p>
-            )}
+            <Sayfalama
+                sayfa={sayfa}
+                toplam={toplam}
+                link={(n) => linkOlustur("/admin/rehber", { ...filtreler, gorunum: gorunum === "kart" ? "kart" : undefined, sayfa: n > 1 ? String(n) : undefined })}
+            />
         </div>
     );
 }
@@ -204,7 +210,7 @@ function KategoriRozeti({ kategori }: { kategori: KisiSatiri["rehber_kategoriler
     );
 }
 
-function KisiIslemleri({ kisi, kargoEtiketli }: { kisi: KisiSatiri; kargoEtiketli?: boolean }) {
+function KisiIslemleri({ kisi, kargoEtiketli, silebilir }: { kisi: KisiSatiri; kargoEtiketli?: boolean; silebilir: boolean }) {
     return (
         <>
             {kisi.adres && (
@@ -228,14 +234,14 @@ function KisiIslemleri({ kisi, kargoEtiketli }: { kisi: KisiSatiri; kargoEtiketl
                     <Pencil />
                 </Link>
             </Button>
-            <SilButonu onay={`"${kisi.ad_soyad_unvan}" rehberden silinsin mi?`} sil={rehberKisiSil.bind(null, kisi.id)} />
+            {silebilir && <SilButonu onay={`"${kisi.ad_soyad_unvan}" rehberden silinsin mi?`} sil={rehberKisiSil.bind(null, kisi.id)} />}
         </>
     );
 }
 
 // ─── Liste (tablo) görünümü ─────────────────────────────────
 
-function KisiTablosu({ kisiler }: { kisiler: KisiSatiri[] }) {
+function KisiTablosu({ kisiler, silebilir }: { kisiler: KisiSatiri[]; silebilir: boolean }) {
     return (
         <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
             <table className="w-full text-left text-sm">
@@ -287,7 +293,7 @@ function KisiTablosu({ kisiler }: { kisiler: KisiSatiri[] }) {
                             </td>
                             <td className="px-4 py-3">
                                 <div className="flex justify-end gap-1">
-                                    <KisiIslemleri kisi={k} />
+                                    <KisiIslemleri kisi={k} silebilir={silebilir} />
                                 </div>
                             </td>
                         </tr>
@@ -300,7 +306,7 @@ function KisiTablosu({ kisiler }: { kisiler: KisiSatiri[] }) {
 
 // ─── Kart görünümü ──────────────────────────────────────────
 
-function KisiKarti({ kisi: k }: { kisi: KisiSatiri }) {
+function KisiKarti({ kisi: k, silebilir }: { kisi: KisiSatiri; silebilir: boolean }) {
     return (
         <div className="flex flex-col rounded-xl border bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-start justify-between gap-2">
@@ -345,7 +351,7 @@ function KisiKarti({ kisi: k }: { kisi: KisiSatiri }) {
             )}
 
             <div className="mt-3 flex items-center justify-end gap-1 border-t pt-3">
-                <KisiIslemleri kisi={k} kargoEtiketli />
+                <KisiIslemleri kisi={k} kargoEtiketli silebilir={silebilir} />
             </div>
         </div>
     );

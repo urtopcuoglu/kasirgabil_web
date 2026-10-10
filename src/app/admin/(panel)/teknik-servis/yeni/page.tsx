@@ -1,5 +1,6 @@
 // src/app/admin/(panel)/teknik-servis/yeni/page.tsx
 import type { Metadata } from "next";
+import { izinGerekli } from "@/lib/supabase/yetkili";
 import { createClient } from "@/lib/supabase/server";
 import type { Personel } from "@/lib/schemas/personel";
 import { SayfaBasligi } from "../../../_components/form";
@@ -10,9 +11,10 @@ export const metadata: Metadata = {
 };
 
 export default async function YeniServisSayfasi() {
+    await izinGerekli("servis_yaz");
     const supabase = await createClient();
     // Pasif personel yeni kayıtta seçilemez.
-    const { data } = await supabase.from("personel").select("id, ad_soyad, aktif").eq("aktif", true).order("ad_soyad");
+    const { data } = await supabase.from("personel").select("id, ad_soyad, aktif").eq("aktif", true).eq("sistem_hesabi", false).order("ad_soyad");
 
     return (
         <div>

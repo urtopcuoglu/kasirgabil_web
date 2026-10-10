@@ -1,9 +1,10 @@
 // src/app/admin/(panel)/teknik-servis/page.tsx
 import type { Metadata } from "next";
+import { izinVar } from "@/lib/izinler";
+import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { CalendarClock, CalendarPlus, Eye, Laptop, Phone, Plus, Printer, Search, UserCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { DURUM_KODLARI, kalemToplamlari, SERVIS_DURUMLARI, type ServisKaydi } from "@/lib/schemas/servis";
 import type { Personel } from "@/lib/schemas/personel";
 import { bugunISO, gunBasi, paraYaz, sonrakiGunBasi, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
@@ -15,9 +16,12 @@ import {
     FiltreOzeti,
     FiltreSecimi,
     FiltreTarihi,
-    GorunumSecici,
     gorunumOku,
+    GorunumSecici,
     linkOlustur,
+    sayfaAraligi,
+    Sayfalama,
+    sayfaOku,
     secenekOku,
     tarihMi,
     uuidMi,
@@ -32,6 +36,7 @@ export const metadata: Metadata = {
 type Props = {
     searchParams: Promise<{
         q?: string;
+        sayfa?: string;
         durum?: string;
         personel?: string;
         baslangic?: string;
@@ -46,7 +51,6 @@ type ServisSatiri = ServisKaydi & {
     servis_kalemleri: { tip: "iscilik" | "malzeme"; tutar: number }[];
 };
 
-const LIMIT = 200;
 // "acik" = teslim edilmemiş tüm kayıtlar (varsayılan değil, ama en sık kullanılan filtre).
 const DURUM_FILTRELERI = ["", "acik", ...DURUM_KODLARI] as const;
 const SIRALAMALAR = {
@@ -66,6 +70,7 @@ function gecikmisMi(k: ServisKaydi, bugun: string) {
 
 export default async function TeknikServisSayfasi({ searchParams }: Props) {
     const p = await searchParams;
+    const sayfa = sayfaOku(p.sayfa);
     const q = (p.q ?? "").trim();
     const durum = secenekOku(p.durum, DURUM_FILTRELERI, "");
     const personel = uuidMi(p.personel) ? p.personel : undefined;
@@ -85,13 +90,14 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
     const aktifFiltre = Object.values(filtreler).filter(Boolean).length;
 
     const supabase = await createClient();
+    const o = await oturum();
     const { sutun, artan } = SIRALAMALAR[sirala];
 
     let sorgu = supabase
         .from("teknik_servis_kayitlari")
-        .select("*, personel(ad_soyad), servis_kalemleri(tip, tutar)")
+        .select("*, personel(ad_soyad), servis_kalemleri(tip, tutar)", { count: "exact" })
         .order(sutun, { ascending: artan, nullsFirst: false })
-        .limit(LIMIT);
+        .range(...sayfaAraligi(sayfa));
 
     if (q) sorgu = sorgu.ilike("arama", aramaDeseni(q));
     if (durum === "acik") sorgu = sorgu.neq("durum", "teslim_edildi");
@@ -102,10 +108,11 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
 
     const [kayitlarSonucu, personelSonucu] = await Promise.all([
         sorgu,
-        supabase.from("personel").select("id, ad_soyad").order("ad_soyad"),
+        supabase.from("personel").select("id, ad_soyad").eq("sistem_hesabi", false).order("ad_soyad"),
     ]);
 
     const kayitlar = (kayitlarSonucu.data ?? []) as ServisSatiri[];
+    const toplam = kayitlarSonucu.count ?? 0;
     const personeller = (personelSonucu.data ?? []) as Pick<Personel, "id" | "ad_soyad">[];
     const hata = kayitlarSonucu.error ?? personelSonucu.error;
     const bugun = bugunISO();
@@ -113,11 +120,13 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
     return (
         <div>
             <SayfaBasligi baslik="Teknik Servis" aciklama="Servis kayıtları, durum takibi ve ücretlendirme.">
+{izinVar(o?.rol, "servis_yaz") && (
                 <Button asChild className={anaButonSinifi}>
                     <Link href="/admin/teknik-servis/yeni">
                         <Plus /> Yeni Servis Kaydı
                     </Link>
                 </Button>
+)}
             </SayfaBasligi>
 
             <OtomatikFiltreFormu
@@ -176,7 +185,7 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
             </OtomatikFiltreFormu>
 
             <FiltreOzeti
-                sonucSayisi={kayitlar.length}
+                sonucSayisi={toplam}
                 aktifFiltre={aktifFiltre}
                 temizleLinki={linkOlustur("/admin/teknik-servis", { gorunum: gorunum === "kart" ? "kart" : undefined })}
             />
@@ -200,11 +209,11 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
                     <ServisTablosu kayitlar={kayitlar} bugun={bugun} />
                 ))}
 
-            {kayitlar.length === LIMIT && (
-                <p className="mt-4 text-center text-xs text-gray-500">
-                    İlk {LIMIT} kayıt gösteriliyor. Daha fazlası için filtreleri daraltın.
-                </p>
-            )}
+            <Sayfalama
+                sayfa={sayfa}
+                toplam={toplam}
+                link={(n) => linkOlustur("/admin/teknik-servis", { ...filtreler, gorunum: gorunum === "kart" ? "kart" : undefined, sayfa: n > 1 ? String(n) : undefined })}
+            />
         </div>
     );
 }
