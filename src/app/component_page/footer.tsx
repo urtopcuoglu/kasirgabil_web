@@ -3,8 +3,10 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Linkedin, Instagram } from 'lucide-react';
+import { telLinki, type Iletisim } from '@/lib/schemas/icerik';
 
-const Footer = () => {
+// İletişim bilgileri panelden düzenlenir; (site) layout'u veritabanından okuyup verir.
+const Footer = ({ iletisim }: { iletisim: Iletisim | null }) => {
 
     return (
         <footer className="w-full bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200">
@@ -60,6 +62,9 @@ const Footer = () => {
                                 <a href="/services" className="hover:text-[var(--color-primary)] transition-colors">Hizmetlerimiz</a>
                             </li>
                             <li>
+                                <Link href="/blog" className="hover:text-[var(--color-primary)] transition-colors">Blog</Link>
+                            </li>
+                            <li>
                                 <a href="/public/contact" className="hover:text-[var(--color-primary)] transition-colors">İletişim Bilgilerimiz</a>
                             </li>
                             <li>
@@ -107,7 +112,7 @@ const Footer = () => {
                                 </Link>
                             </li>
                             <li>
-                                <a href="https://kasirgabilgisayar.sahibinden.com/" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block w-36">
+                                <a href={iletisim?.sahibinden || 'https://kasirgabilgisayar.sahibinden.com/'} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block w-36">
                                     <Image
                                         src="/brand/sahibinden.svg"
                                         alt="Sahibinden.com"
@@ -127,28 +132,36 @@ const Footer = () => {
                             <li className="flex items-center space-x-2">
                                 <Phone size={16} className="text-zinc-500" />
                                 <div>
-                                    <p className="font-semibold">0 (312) 431 02 64</p>
-                                    <p className="font-semibold">0 (312) 312 60 11</p>
-                                    <p className="font-semibold">0 (505) 387 79 39</p>
+                                    {iletisim?.telefonlar.map((tel) => (
+                                        <a key={tel} href={telLinki(tel)} className="block font-semibold hover:text-[var(--color-primary)] transition-colors">
+                                            {tel}
+                                        </a>
+                                    ))}
                                 </div>
                             </li>
                             <li className="flex items-center space-x-2">
                                 <Mail size={16} className="text-zinc-500" />
-                                <a href="mailto:info@kasirgabilgisayar.com" className="hover:text-[var(--color-primary)] transition-colors">info@kasirgabilgisayar.com</a>
+                                {iletisim?.eposta && (
+                                    <a href={`mailto:${iletisim.eposta}`} className="hover:text-[var(--color-primary)] transition-colors">{iletisim.eposta}</a>
+                                )}
                             </li>
                             <li className="flex items-start space-x-2">
                                 <MapPin size={16} className="text-zinc-500" />
-                                <p>Cumhuriyet Mh. Bayındır-1 Sk. No:5/10 Kızılay - Çankaya - Ankara</p>
+                                <p className="whitespace-pre-line">{iletisim?.adres}</p>
                             </li>
                         </ul>
                         {/* Sosyal Medya İkonları */}
                         <div className="flex space-x-4 mt-6">
-                            <a href="https://www.linkedin.com/company/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
-                                <Linkedin size={24} />
-                            </a>
-                            <a href="https://www.instagram.com/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
-                                <Instagram size={24} />
-                            </a>
+                            {iletisim?.linkedin && (
+                                <a href={iletisim.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
+                                    <Linkedin size={24} />
+                                </a>
+                            )}
+                            {iletisim?.instagram && (
+                                <a href={iletisim.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-zinc-500 hover:text-[var(--color-primary)] transition-colors">
+                                    <Instagram size={24} />
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -157,7 +170,7 @@ const Footer = () => {
             {/* Copyright and Design Section */}
             <div className="bg-[var(--color-secondary)] text-white py-4 px-4">
                 <div className="container mx-auto text-center md:text-left text-xs flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-                    <p>&copy; 2025 Kasırga Bilgisayar Tüm Hakları Saklıdır.</p>
+                    <p>&copy; {new Date().getFullYear()} Kasırga Bilgisayar Tüm Hakları Saklıdır.</p>
                     <p>
                         Design by <a href="https://www.ortisoft.com.tr" target="_blank" rel="noopener noreferrer" className="hover:underline">Ortisoft</a>
                     </p>
@@ -165,8 +178,9 @@ const Footer = () => {
             </div>
 
             {/* WhatsApp Button */}
+            {iletisim?.whatsapp && (
             <a
-                href="https://wa.me/905053877939"
+                href={`https://wa.me/${iletisim.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
@@ -174,6 +188,7 @@ const Footer = () => {
             >
                 <Phone size={24} />
             </a>
+            )}
 
         </footer>
     );

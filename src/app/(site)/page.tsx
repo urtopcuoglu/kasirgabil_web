@@ -1,24 +1,10 @@
-"use client";
-import React from "react";
-import Image from "next/image";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 import { Wrench, ScanBarcode } from 'lucide-react';
 
-import Header from "@/app/component_page/header";
-import Footer from "@/app/component_page/footer";
+import AnaSlider from "@/app/component_page/AnaSlider";
+import { siteIcerigi } from "@/lib/icerik";
 import ProductCard from "@/app/component_page/ProductCard";
 import ServiceCard from "@/app/component_page/ServicesCard";
 import BrandCard from "@/app/component_page/BrandCard";
-
-const sliderImages = [
-    '/slider_image/slider-1.jpg',
-    '/slider_image/slider-2.jpg',
-    '/slider_image/slider-3.jpg',
-];
 
 const productCategories = [
     {
@@ -128,36 +114,15 @@ const brands = [
     { brandName: 'Fujitsu', logoSrc: '/brand/fujitsu.svg' },
 ];
 
-export default function Home() {
+export default async function Home() {
+    // Slider görselleri panelden düzenlenir (site_icerikleri: anasayfa_slider).
+    const slider = await siteIcerigi('anasayfa_slider');
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-zinc-800">
 
             <main className="flex-1 flex flex-col items-center">
-                {/* Image Slider Component (Full-width) */}
-                <div className="w-full relative h-[500px] mb-12">
-                    <Swiper
-                        modules={[Navigation, Pagination]}
-                        spaceBetween={30}
-                        slidesPerView={1}
-                        navigation
-                        pagination={{ clickable: true }}
-                        onSlideChange={() => console.log('slide change')}
-                        onSwiper={(swiper) => console.log(swiper)}
-                        className="mySwiper w-full h-full"
-                    >
-                        {sliderImages.map((image, index) => (
-                            <SwiperSlide key={index}>
-                                <Image
-                                    src={image}
-                                    alt={`Slider Image ${index + 1}`}
-                                    fill
-                                    objectFit="cover"
-                                    className="rounded-none shadow-none"
-                                />
-                            </SwiperSlide>
-                        ))}
-                    </Swiper>
-                </div>
+                <AnaSlider slaytlar={slider?.slaytlar ?? []} />
 
                 {/* Main Content Sections (p-8 ve p-20 buraya taşındı) */}
                 <div className="p-8 pb-20 gap-16 sm:p-20 flex flex-col items-center">

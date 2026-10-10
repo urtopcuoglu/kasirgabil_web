@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
                 port: '',
                 pathname: '/**',
             },
+            // Panelden yüklenen görseller (blog, slider, banka logoları) — Supabase Storage "site" bucket'ı
+            {
+                protocol: 'https',
+                hostname: '*.supabase.co',
+                pathname: '/storage/v1/object/public/site/**',
+            },
         ],
     },
     async redirects() {

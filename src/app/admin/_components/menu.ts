@@ -26,6 +26,6 @@ export const menuOgeleri: MenuOgesi[] = [
     { href: "/admin/kargolar", etiket: "Kargolar", ikon: Truck, hazir: true },
     { href: "/admin/stok", etiket: "Stok", ikon: Package, hazir: true },
     { href: "/admin/kasa", etiket: "Kasa", ikon: Wallet, hazir: true },
-    { href: "/admin/icerik", etiket: "İçerik / Blog", ikon: FileText, hazir: false },
+    { href: "/admin/icerik", etiket: "İçerik / Blog", ikon: FileText, hazir: true },
     { href: "/admin/personel", etiket: "Personel", ikon: Users, hazir: true },
 ];

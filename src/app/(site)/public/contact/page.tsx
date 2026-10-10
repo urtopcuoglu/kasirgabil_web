@@ -1,13 +1,17 @@
-"use client";
-import React from 'react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import { Mail, MapPin, Phone, Instagram, Linkedin } from 'lucide-react';
+import { siteIcerigi } from '@/lib/icerik';
+import { telLinki } from '@/lib/schemas/icerik';
 
-// Ortak bileşenleri import edin
-import Header from '@/app/component_page/header';
-import Footer from '@/app/component_page/footer';
+export const metadata: Metadata = {
+    title: 'İletişim | Kasırga Bilgisayar',
+    description: 'Kasırga Bilgisayar adres, telefon, e-posta ve konum bilgileri.',
+};
 
-export default function ContactPage() {
+// İletişim bilgileri panelden düzenlenir (site_icerikleri: iletisim).
+export default async function ContactPage() {
+    const iletisim = await siteIcerigi('iletisim');
     return (
         <div className="flex flex-col min-h-screen bg-white">
             <main className="flex-1 flex flex-col">
@@ -88,15 +92,16 @@ export default function ContactPage() {
                         </div>
                         {/* Sağ Kısım: Harita */}
                         <div className="relative w-full h-[600px] rounded-lg shadow-lg overflow-hidden">
-                            <iframe
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3059.7719635465!2d32.85353607565204!3d39.92411908547474!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14d34e55abbc6c7d%3A0xa2355776a7dcc283!2sKas%C4%B1rga%20Bilgisayar!5e0!3m2!1str!2str!4v1757352239708!5m2!1str!2str"
+                            {iletisim?.harita_url && <iframe
+                                title="Kasırga Bilgisayar konumu"
+                                src={iletisim.harita_url}
                                 width="100%"
                                 height="100%"
                                 style={{ border: 0 }}
                                 allowFullScreen={true}
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
-                            ></iframe>
+                            ></iframe>}
                         </div>
                     </div>
                 </section>
@@ -110,28 +115,29 @@ export default function ContactPage() {
                             <div className="group bg-white p-6 rounded-lg shadow-lg text-center flex flex-col items-center gap-4 border-b-4 border-transparent hover:border-[var(--color-primary)] transition-all duration-300">
                                 <MapPin size={48} className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors" />
                                 <h3 className="text-xl font-semibold text-[var(--color-secondary)]">Adresimiz</h3>
-                                <p className="text-sm text-gray-600">
-                                    Cumhuriyet Mh. Bayındır-1 Sk.<br />
-                                    No:5/10 Kızılay - Çankaya / Ankara
-                                </p>
+                                <p className="whitespace-pre-line text-sm text-gray-600">{iletisim?.adres}</p>
                             </div>
                             {/* Telefon Kartı */}
                             <div className="group bg-white p-6 rounded-lg shadow-lg text-center flex flex-col items-center gap-4 border-b-4 border-transparent hover:border-[var(--color-primary)] transition-all duration-300">
                                 <Phone size={48} className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors" />
                                 <h3 className="text-xl font-semibold text-[var(--color-secondary)]">Telefon Numaralarımız</h3>
                                 <div className="space-y-1">
-                                    <p className="font-semibold text-[var(--color-secondary)]">0 (312) 431 02 64</p>
-                                    <p className="font-semibold text-[var(--color-secondary)]">0 (312) 312 60 11</p>
-                                    <p className="font-semibold text-[var(--color-secondary)]">0 (505) 387 79 39</p>
+                                    {iletisim?.telefonlar.map((tel) => (
+                                        <a key={tel} href={telLinki(tel)} className="block font-semibold text-[var(--color-secondary)] hover:text-[var(--color-primary)]">
+                                            {tel}
+                                        </a>
+                                    ))}
                                 </div>
                             </div>
                             {/* E-mail Kartı */}
                             <div className="group bg-white p-6 rounded-lg shadow-lg text-center flex flex-col items-center gap-4 border-b-4 border-transparent hover:border-[var(--color-primary)] transition-all duration-300">
                                 <Mail size={48} className="text-gray-400 group-hover:text-[var(--color-primary)] transition-colors" />
                                 <h3 className="text-xl font-semibold text-[var(--color-secondary)]">E-mail Adresimiz</h3>
-                                <p className="text-sm text-gray-600">
-                                    info@kasirgabilgisayar.com
-                                </p>
+                                {iletisim?.eposta && (
+                                    <a href={`mailto:${iletisim.eposta}`} className="text-sm text-gray-600 hover:text-[var(--color-primary)]">
+                                        {iletisim.eposta}
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -143,7 +149,7 @@ export default function ContactPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                             {/* Sahibinden.com Section */}
                             <div className="border-2 border-[var(--color-secondary)] hover:border-[var(--color-primary)] transition-colors duration-300 rounded-lg p-4 flex items-center gap-4 justify-center md:justify-start">
-                                <a href="https://kasirgabilgisayar.sahibinden.com/" target="_blank" rel="noopener noreferrer">
+                                <a href={iletisim?.sahibinden || 'https://kasirgabilgisayar.sahibinden.com/'} target="_blank" rel="noopener noreferrer">
                                     <Image
                                         src="/brand/sahibinden.svg"
                                         alt="Sahibinden.com"
@@ -157,12 +163,16 @@ export default function ContactPage() {
                             {/* Sosyal Medya Section */}
                             <div className="flex items-center gap-4 justify-center md:justify-end">
                                 <span className="text-lg font-bold text-[var(--color-secondary)]">Sosyal Medya Hesaplarımız</span>
-                                <a href="https://www.instagram.com/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors">
-                                    <Instagram size={32} />
-                                </a>
-                                <a href="https://www.linkedin.com/company/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors">
-                                    <Linkedin size={32} />
-                                </a>
+                                {iletisim?.instagram && (
+                                    <a href={iletisim.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors">
+                                        <Instagram size={32} />
+                                    </a>
+                                )}
+                                {iletisim?.linkedin && (
+                                    <a href={iletisim.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="text-[var(--color-secondary)] hover:text-[var(--color-primary)] transition-colors">
+                                        <Linkedin size={32} />
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>

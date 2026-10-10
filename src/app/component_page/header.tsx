@@ -9,49 +9,26 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Wrench, Home, Info, Hammer, Mail, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check, Menu, X } from 'lucide-react';
-
-// Banka Hesapları Veri Yapısı
-const bankAccounts = [
-    {
-        id: 1,
-        name: 'Garanti BBVA',
-        accountNumber: '1234567890',
-        iban: 'TR12 0001 0001 XXXXX',
-        logo: '/bank/garanti.png',
-    },
-    {
-        id: 2,
-        name: 'İş Bankası',
-        accountNumber: '9876543210',
-        iban: 'TR34 0001 0002 XXXXX',
-        logo: '/bank/is-bankasi.png',
-    },
-    {
-        id: 3,
-        name: 'Yapı Kredi',
-        accountNumber: '5555666677',
-        iban: 'TR56 0001 0003 XXXXX',
-        logo: '/bank/yapi-kredi.jpg',
-    },
-    {
-        id: 4,
-        name: 'Enpara',
-        accountNumber: '1111222233',
-        iban: 'TR78 0001 0004 XXXXX',
-        logo: '/bank/enpara.png',
-    },
-];
+import { Wrench, Home, Info, Hammer, Mail, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check, Menu, X, BookOpen } from 'lucide-react';
+import { telLinki, type BankaHesaplari, type Iletisim } from '@/lib/schemas/icerik';
 
 const navLinks = [
     { href: '/', label: 'Anasayfa', icon: Home },
-    { href: '../public/about', label: 'Hakkımızda', icon: Info },
+    { href: '/public/about', label: 'Hakkımızda', icon: Info },
     { href: '/services', label: 'Hizmetlerimiz', icon: Wrench },
-    { href: '../public/contact', label: 'İletişim', icon: Mail },
+    { href: '/blog', label: 'Blog', icon: BookOpen },
+    { href: '/public/contact', label: 'İletişim', icon: Mail },
     { href: '/services/teknik-servis', label: 'Teknik Servis', icon: Hammer },
 ];
 
-const Header = () => {
+// İletişim bilgileri ve banka hesapları panelden düzenlenir; (site) layout'u veritabanından okuyup verir.
+type HeaderProps = {
+    iletisim: Iletisim | null;
+    bankaHesaplari: BankaHesaplari['hesaplar'];
+};
+
+const Header = ({ iletisim, bankaHesaplari }: HeaderProps) => {
+    const telefonlar = iletisim?.telefonlar ?? [];
     const [exchangeRates, setExchangeRates] = useState<{ usd: string | null; eur: string | null }>({ usd: null, eur: null });
     const [loading, setLoading] = useState<boolean>(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -110,12 +87,14 @@ const Header = () => {
                     <div className="hidden lg:flex items-center gap-6">
                         <div className="flex items-center gap-1">
                             <MapPin size={14} className="text-[var(--color-secondary)] shrink-0" />
-                            <span>Cumhuriyet Mh. Bayındır-1 Sk. 5/10 Çankaya/Ankara</span>
+                            <span>{iletisim?.adres.replace(/\s*\n\s*/g, ' ')}</span>
                         </div>
-                        <a href="tel:03124310264" className="flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors">
-                            <Phone size={14} className="text-[var(--color-secondary)] shrink-0" />
-                            <span>0312 431 02 64</span>
-                        </a>
+                        {telefonlar[0] && (
+                            <a href={telLinki(telefonlar[0])} className="flex items-center gap-1 hover:text-[var(--color-primary)] transition-colors">
+                                <Phone size={14} className="text-[var(--color-secondary)] shrink-0" />
+                                <span>{telefonlar[0]}</span>
+                            </a>
+                        )}
                     </div>
 
                     {/* Banka Hesapları ve Sosyal Medya */}
@@ -137,14 +116,14 @@ const Header = () => {
                                         <p className="text-sm text-gray-600">Kasırga Bilgisayar&apos;a ait banka hesap bilgileri</p>
                                     </div>
                                     <div className="space-y-3 max-h-96 overflow-y-auto">
-                                        {bankAccounts.map((bank) => (
-                                            <div key={bank.id} className="border-2 border-gray-200 rounded-lg p-3 hover:border-[var(--color-primary)] transition-all duration-300 hover:shadow-md">
+                                        {bankaHesaplari.map((bank) => (
+                                            <div key={bank.iban} className="border-2 border-gray-200 rounded-lg p-3 hover:border-[var(--color-primary)] transition-all duration-300 hover:shadow-md">
                                                 <div className="flex items-center space-x-3 mb-2">
                                                     <div className="flex-shrink-0 w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                                                         {bank.logo && (
                                                             <Image
                                                                 src={bank.logo}
-                                                                alt={bank.name}
+                                                                alt={bank.hesap_adi}
                                                                 width={40}
                                                                 height={40}
                                                                 className="object-contain"
@@ -152,14 +131,17 @@ const Header = () => {
                                                         )}
                                                     </div>
                                                     <div className="flex-grow">
-                                                        <p className="font-semibold text-gray-800 text-sm">{bank.name}</p>
+                                                        <p className="font-semibold text-gray-800 text-sm">{bank.hesap_adi}</p>
+                                                        {bank.sube && <p className="text-xs text-gray-500">{bank.sube}</p>}
                                                     </div>
                                                 </div>
                                                 <div className="space-y-2 text-xs bg-gray-50 rounded p-2">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="text-gray-600">Hesap No:</span>
-                                                        <code className="bg-white px-2 py-1 rounded text-gray-800 font-mono text-xs break-all">{bank.accountNumber}</code>
-                                                    </div>
+                                                    {bank.hesap_no && (
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-gray-600">Hesap No:</span>
+                                                            <code className="bg-white px-2 py-1 rounded text-gray-800 font-mono text-xs break-all">{bank.hesap_no}</code>
+                                                        </div>
+                                                    )}
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-gray-600">IBAN:</span>
                                                         <code className="bg-white px-2 py-1 rounded text-gray-800 font-mono text-xs break-all">{bank.iban}</code>
@@ -181,18 +163,22 @@ const Header = () => {
                                 <span className="hidden sm:inline">Sosyal Medya</span>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                <DropdownMenuItem asChild>
-                                    <a href="https://www.instagram.com/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2">
-                                        <Instagram size={16} />
-                                        <span>Instagram</span>
-                                    </a>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <a href="https://www.linkedin.com/company/kasirgabilgisayar" target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2">
-                                        <Linkedin size={16} />
-                                        <span>LinkedIn</span>
-                                    </a>
-                                </DropdownMenuItem>
+                                {iletisim?.instagram && (
+                                    <DropdownMenuItem asChild>
+                                        <a href={iletisim.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2">
+                                            <Instagram size={16} />
+                                            <span>Instagram</span>
+                                        </a>
+                                    </DropdownMenuItem>
+                                )}
+                                {iletisim?.linkedin && (
+                                    <DropdownMenuItem asChild>
+                                        <a href={iletisim.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2">
+                                            <Linkedin size={16} />
+                                            <span>LinkedIn</span>
+                                        </a>
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -276,18 +262,12 @@ const Header = () => {
                     </ul>
                     {/* Mobile Phone Numbers */}
                     <div className="mt-4 pt-4 border-t border-white/20 flex flex-col gap-2">
-                        <a href="tel:03124310264" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
-                            <Phone size={15} className="text-[var(--color-primary)]" />
-                            0 (312) 431 02 64
-                        </a>
-                        <a href="tel:03123126011" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
-                            <Phone size={15} className="text-[var(--color-primary)]" />
-                            0 (312) 312 60 11
-                        </a>
-                        <a href="tel:05053877939" className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
-                            <Phone size={15} className="text-[var(--color-primary)]" />
-                            0 (505) 387 79 39
-                        </a>
+                        {telefonlar.map((tel) => (
+                            <a key={tel} href={telLinki(tel)} className="flex items-center gap-2 text-white/90 text-sm hover:text-[var(--color-primary)] transition-colors">
+                                <Phone size={15} className="text-[var(--color-primary)]" />
+                                {tel}
+                            </a>
+                        ))}
                     </div>
                 </div>
             )}
