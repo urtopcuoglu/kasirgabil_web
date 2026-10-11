@@ -11,6 +11,7 @@ export const IZINLER = {
     kasa_yonet: ["yonetici"], // günü yeniden açma, hareket silme, kasa kategorileri
     icerik: ["yonetici"], // site içerikleri ve blog
     mesajlar: ["yonetici"], // iletişim formundan gelen mesajlar
+    sohbet: ["yonetici", "teknisyen", "kasa"], // canlı sohbetleri görme ve yanıtlama (silme: sil izni)
     personel: ["yonetici"], // personel ve panel girişleri
     sil: ["yonetici"], // servis, rehber, kargo vb. kayıt silme
 } as const satisfies Record<string, readonly Rol[]>;

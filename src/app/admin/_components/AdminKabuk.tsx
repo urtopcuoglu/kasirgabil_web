@@ -11,18 +11,22 @@ import { izinVar } from "@/lib/izinler";
 import { ROLLER, type Rol } from "@/lib/schemas/personel";
 import { cn } from "@/lib/utils";
 import { menuOgeleri } from "./menu";
+import { useSohbetBildirimi } from "./sohbetBildirimi";
 
 type Props = {
     email: string;
     ad: string | null;
     rol: Rol | null;
     okunmamisMesaj?: number;
+    okunmamisSohbet?: number;
     children: React.ReactNode;
 };
 
-export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, children }: Props) {
+export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmamisSohbet = 0, children }: Props) {
     const pathname = usePathname();
     const [menuAcik, setMenuAcik] = useState(false);
+    const sohbetSayisi = useSohbetBildirimi(izinVar(rol, "sohbet"), okunmamisSohbet);
+    const rozetler = { mesajlar: okunmamisMesaj, sohbet: sohbetSayisi };
 
     // Mobilde bir sayfaya geçildiğinde menüyü kapat.
     useEffect(() => {
@@ -81,12 +85,12 @@ export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, childre
                             >
                                 <Ikon className="size-4" />
                                 {etiket}
-                                {rozet === "mesajlar" && okunmamisMesaj > 0 && (
+                                {rozet && rozetler[rozet] > 0 && (
                                     <span
                                         className="ml-auto rounded-full bg-white px-1.5 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-primary)]"
-                                        aria-label={`${okunmamisMesaj} okunmamış mesaj`}
+                                        aria-label={`${rozetler[rozet]} okunmamış`}
                                     >
-                                        {okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}
+                                        {rozetler[rozet] > 99 ? "99+" : rozetler[rozet]}
                                     </span>
                                 )}
                             </Link>

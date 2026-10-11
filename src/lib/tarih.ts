@@ -14,6 +14,11 @@ export function tarihSaatYaz(iso: string) {
     }).format(new Date(iso));
 }
 
+// timestamptz → "14:35"
+export function saatYaz(iso: string) {
+    return new Intl.DateTimeFormat("tr-TR", { timeZone: SAAT_DILIMI, hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+}
+
 // date ("2026-10-10") → "10.10.2026". Saat dilimi kaymasını önlemek için elle ayrıştırılır.
 export function tarihYaz(gun: string) {
     const [yil, ay, gunNo] = gun.split("-");

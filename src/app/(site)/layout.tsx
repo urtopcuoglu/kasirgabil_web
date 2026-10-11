@@ -3,6 +3,7 @@
 // İletişim bilgileri ve banka hesapları panelden düzenlenir (site_icerikleri).
 import Header from "@/app/component_page/header";
 import Footer from "@/app/component_page/footer";
+import CanliSohbet from "@/app/component_page/CanliSohbet";
 import { siteIcerigi } from "@/lib/icerik";
 
 // Sayfalar önbellekten sunulur; panelden kayıt yapılınca revalidatePath ile hemen yenilenir.
@@ -21,6 +22,7 @@ export default async function SiteLayout({
             <Header iletisim={iletisim} bankaHesaplari={banka?.hesaplar ?? []} />
             <main>{children}</main>
             <Footer iletisim={iletisim} />
+            <CanliSohbet whatsappVar={!!iletisim?.whatsapp} />
         </>
     );
 }

@@ -43,16 +43,25 @@ export default async function PanelLayout({
         );
     }
 
-    // Menüdeki "Mesajlar" rozeti için okunmamış iletişim mesajı sayısı.
-    let okunmamisMesaj = 0;
-    if (izinVar(o.rol, "mesajlar")) {
-        const supabase = await createClient();
-        const { count } = await supabase.from("iletisim_mesajlari").select("id", { count: "exact", head: true }).eq("okundu", false);
-        okunmamisMesaj = count ?? 0;
-    }
+    // Menü rozetleri: okunmamış iletişim mesajı ve yanıt bekleyen (açık, okunmamış) sohbet sayısı.
+    const supabase = await createClient();
+    const [mesajSayisi, sohbetSayisi] = await Promise.all([
+        izinVar(o.rol, "mesajlar")
+            ? supabase.from("iletisim_mesajlari").select("id", { count: "exact", head: true }).eq("okundu", false)
+            : null,
+        izinVar(o.rol, "sohbet")
+            ? supabase.from("sohbetler").select("id", { count: "exact", head: true }).eq("okunmamis", true).eq("durum", "acik")
+            : null,
+    ]);
 
     return (
-        <AdminKabuk email={o.email} ad={o.ad} rol={o.rol} okunmamisMesaj={okunmamisMesaj}>
+        <AdminKabuk
+            email={o.email}
+            ad={o.ad}
+            rol={o.rol}
+            okunmamisMesaj={mesajSayisi?.count ?? 0}
+            okunmamisSohbet={sohbetSayisi?.count ?? 0}
+        >
             {children}
         </AdminKabuk>
     );

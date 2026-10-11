@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Linkedin, Instagram } from 'lucide-react';
 import { telLinki, type Iletisim } from '@/lib/schemas/icerik';
+import YuzenEtiket from './YuzenEtiket';
 
 // İletişim bilgileri panelden düzenlenir; (site) layout'u veritabanından okuyup verir.
 const Footer = ({ iletisim }: { iletisim: Iletisim | null }) => {
@@ -183,10 +184,13 @@ const Footer = ({ iletisim }: { iletisim: Iletisim | null }) => {
                 href={`https://wa.me/${iletisim.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform"
+                className="group fixed bottom-6 right-6 z-50 rounded-full focus-visible:outline-none"
                 aria-label="WhatsApp"
             >
-                <Phone size={24} />
+                <YuzenEtiket metin="WhatsApp" renk="#128C7E" />
+                <span className="block rounded-full bg-[#25D366] p-3 text-white shadow-lg transition-transform duration-200 group-hover:scale-110 group-focus-visible:ring-4 group-focus-visible:ring-[#25D366]/30">
+                    <Phone size={24} />
+                </span>
             </a>
             )}
 
