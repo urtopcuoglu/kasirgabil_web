@@ -6,6 +6,8 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { LogOut, ShieldOff } from "lucide-react";
 import { cikisYap } from "@/actions/auth";
+import { izinVar } from "@/lib/izinler";
+import { createClient } from "@/lib/supabase/server";
 import { oturum } from "@/lib/supabase/yetkili";
 import AdminKabuk from "../_components/AdminKabuk";
 
@@ -41,8 +43,16 @@ export default async function PanelLayout({
         );
     }
 
+    // Menüdeki "Mesajlar" rozeti için okunmamış iletişim mesajı sayısı.
+    let okunmamisMesaj = 0;
+    if (izinVar(o.rol, "mesajlar")) {
+        const supabase = await createClient();
+        const { count } = await supabase.from("iletisim_mesajlari").select("id", { count: "exact", head: true }).eq("okundu", false);
+        okunmamisMesaj = count ?? 0;
+    }
+
     return (
-        <AdminKabuk email={o.email} ad={o.ad} rol={o.rol}>
+        <AdminKabuk email={o.email} ad={o.ad} rol={o.rol} okunmamisMesaj={okunmamisMesaj}>
             {children}
         </AdminKabuk>
     );

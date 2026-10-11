@@ -1,9 +1,10 @@
 // src/app/admin/(panel)/page.tsx
-// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar ve kritik stok.
+// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar, kritik stok ve stok metrikleri.
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Package, PackagePlus, Phone, Plus, ShieldAlert, Wallet, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowRight, Boxes, Cpu, Laptop, MemoryStick, Monitor, Package, PackagePlus, Phone, Plus, ShieldAlert, Tag, Trophy, Wallet, Wrench } from "lucide-react";
 import { izinVar } from "@/lib/izinler";
+import { stokOzeti, type DalOzeti } from "@/lib/stok";
 import { createClient } from "@/lib/supabase/server";
 import { oturum } from "@/lib/supabase/yetkili";
 import { kasaOzeti, type KasaHareketi } from "@/lib/schemas/kasa";
@@ -13,6 +14,7 @@ import { bugunISO, paraYaz, tarihYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi } from "../_components/form";
+import { linkOlustur } from "../_components/liste";
 import DurumRozeti from "./teknik-servis/DurumRozeti";
 
 export const metadata: Metadata = {
@@ -29,7 +31,7 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
     const bugun = bugunISO();
     const supabase = await createClient();
 
-    const [servisSonucu, kritikSonucu, kasa] = await Promise.all([
+    const [servisSonucu, kritikSonucu, kasa, stok] = await Promise.all([
         supabase
             .from("teknik_servis_kayitlari")
             .select("id, form_no, musteri_ad_soyad, musteri_telefon, cihaz_marka_model, durum, tahmini_teslim_tarihi")
@@ -43,6 +45,7 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
             .order("stok_adedi")
             .limit(8),
         kasaGorur ? kasaVerisi(supabase, bugun) : Promise.resolve(null),
+        stokOzeti(supabase),
     ]);
 
     const acikServisler = (servisSonucu.data ?? []) as AcikServis[];
@@ -174,6 +177,62 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
                 </Kart>
             </div>
 
+            {/* Stok metrikleri */}
+            <section>
+                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="font-semibold text-[var(--color-secondary)]">Stok Özeti</h2>
+                    <Link href="/admin/stok?stok=var" className="text-sm text-[var(--color-secondary)] hover:underline">
+                        Stoktaki ürünler
+                    </Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Metrik
+                        baslik="Stoktaki Ürün"
+                        Ikon={Boxes}
+                        deger={sayiYaz(stok.adet)}
+                        alt={`${sayiYaz(stok.cesit)} çeşit ürün`}
+                        href="/admin/stok?stok=var"
+                    />
+                    <Metrik
+                        baslik="En Çok Stoklu Ürün"
+                        Ikon={Trophy}
+                        deger={stok.enCokUrun ? `${sayiYaz(stok.enCokUrun.stok_adedi)} adet` : "—"}
+                        alt={stok.enCokUrun ? `${stok.enCokUrun.stok_kodu} · ${stok.enCokUrun.ad}` : "Stokta ürün yok"}
+                        href={stok.enCokUrun ? `/admin/stok/${stok.enCokUrun.id}` : undefined}
+                    />
+                    <Metrik
+                        baslik="En Çok Stoklu Marka"
+                        Ikon={Tag}
+                        deger={stok.enCokMarka?.ad ?? "—"}
+                        alt={stok.enCokMarka ? `${sayiYaz(stok.enCokMarka.adet)} adet · ${sayiYaz(stok.enCokMarka.cesit)} çeşit` : "Markası girilmiş ürün yok"}
+                        href={stok.enCokMarka ? linkOlustur("/admin/stok", { q: stok.enCokMarka.ad, stok: "var" }) : undefined}
+                    />
+                    <Metrik
+                        baslik="Notebook İşlemci Markası"
+                        Ikon={Cpu}
+                        deger={stok.notebookIslemciMarkasi?.ad ?? "—"}
+                        alt={
+                            stok.notebookIslemciMarkasi
+                                ? `En çok stoklu · ${sayiYaz(stok.notebookIslemciMarkasi.adet)} adet`
+                                : "Stokta notebook işlemcisi yok"
+                        }
+                        href={
+                            stok.dallar.notebookIslemci.kategoriId
+                                ? linkOlustur("/admin/stok", {
+                                      kategori: stok.dallar.notebookIslemci.kategoriId,
+                                      q: stok.notebookIslemciMarkasi?.ad,
+                                      stok: "var",
+                                  })
+                                : undefined
+                        }
+                    />
+                    <ModelMetrigi baslik="Notebook Modelleri" Ikon={Laptop} dal={stok.dallar.notebookModel} />
+                    <ModelMetrigi baslik="PC Modelleri" Ikon={Monitor} dal={stok.dallar.pcModel} />
+                    <DonanimMetrigi baslik="Notebook Donanım" Ikon={MemoryStick} islemci={stok.dallar.notebookIslemci} ram={stok.dallar.notebookRam} />
+                    <DonanimMetrigi baslik="PC Donanım" Ikon={MemoryStick} islemci={stok.dallar.pcIslemci} ram={stok.dallar.pcRam} />
+                </div>
+            </section>
+
             {/* Teslime hazır cihazlar: müşteri aranmalı */}
             {teslimHazir.length > 0 && (
                 <section className="rounded-xl border bg-white shadow-sm">
@@ -232,7 +291,7 @@ async function kasaVerisi(supabase: Awaited<ReturnType<typeof createClient>>, bu
     };
 }
 
-function Kart({ baslik, Ikon, href, children }: { baslik: string; Ikon: React.ComponentType<{ className?: string }>; href: string; children: React.ReactNode }) {
+function Kart({ baslik, Ikon, href, children }: { baslik: string; Ikon: IkonTipi; href: string; children: React.ReactNode }) {
     return (
         <section className="flex flex-col rounded-xl border bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
@@ -242,6 +301,85 @@ function Kart({ baslik, Ikon, href, children }: { baslik: string; Ikon: React.Co
                 <Ikon className="size-5 text-[var(--color-primary)]" />
             </div>
             <div className="flex-1">{children}</div>
+        </section>
+    );
+}
+
+type IkonTipi = React.ComponentType<{ className?: string }>;
+
+const sayiYaz = (n: number) => n.toLocaleString("tr-TR");
+
+const dalLinki = (dal: DalOzeti) => (dal.kategoriId ? linkOlustur("/admin/stok", { kategori: dal.kategoriId, stok: "var" }) : undefined);
+
+function Metrik({ baslik, Ikon, deger, alt, href }: { baslik: string; Ikon: IkonTipi; deger: string; alt: string; href?: string }) {
+    const icerik = (
+        <>
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-gray-500">{baslik}</span>
+                <Ikon className="size-5 shrink-0 text-[var(--color-primary)]" />
+            </div>
+            <div className="mt-2 truncate text-2xl font-bold tabular-nums text-[var(--color-secondary)]">{deger}</div>
+            <div className="mt-1 truncate text-xs text-gray-500" title={alt}>
+                {alt}
+            </div>
+        </>
+    );
+    const sinif = "block rounded-xl border bg-white p-5 shadow-sm";
+    return href ? (
+        <Link href={href} className={cn(sinif, "transition-colors hover:border-[var(--color-secondary)]")}>
+            {icerik}
+        </Link>
+    ) : (
+        <section className={sinif}>{icerik}</section>
+    );
+}
+
+function ModelMetrigi({ baslik, Ikon, dal }: { baslik: string; Ikon: IkonTipi; dal: DalOzeti }) {
+    return (
+        <Metrik
+            baslik={baslik}
+            Ikon={Ikon}
+            deger={`${sayiYaz(dal.cesit)} model`}
+            alt={dal.kategoriId ? `Toplam ${sayiYaz(dal.adet)} adet stokta` : "Kategori bulunamadı"}
+            href={dalLinki(dal)}
+        />
+    );
+}
+
+function DonanimMetrigi({ baslik, Ikon, islemci, ram }: { baslik: string; Ikon: IkonTipi; islemci: DalOzeti; ram: DalOzeti }) {
+    const satirlar = [
+        { etiket: "İşlemci", dal: islemci },
+        { etiket: "RAM", dal: ram },
+    ];
+    return (
+        <section className="rounded-xl border bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-sm text-gray-500">{baslik}</span>
+                <Ikon className="size-5 shrink-0 text-[var(--color-primary)]" />
+            </div>
+            <dl className="mt-2 grid grid-cols-2 gap-2">
+                {satirlar.map(({ etiket, dal }) => {
+                    const href = dalLinki(dal);
+                    const icerik = (
+                        <>
+                            <dt className="text-xs text-gray-500">{etiket}</dt>
+                            <dd className="text-xl font-bold tabular-nums text-[var(--color-secondary)]">{sayiYaz(dal.adet)}</dd>
+                            <dd className="text-xs text-gray-500">{sayiYaz(dal.cesit)} çeşit</dd>
+                        </>
+                    );
+                    return (
+                        <div key={etiket} className="rounded-md bg-gray-50 p-2">
+                            {href ? (
+                                <Link href={href} className="block hover:underline">
+                                    {icerik}
+                                </Link>
+                            ) : (
+                                icerik
+                            )}
+                        </div>
+                    );
+                })}
+            </dl>
         </section>
     );
 }

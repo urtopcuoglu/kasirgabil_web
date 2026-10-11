@@ -16,10 +16,11 @@ type Props = {
     email: string;
     ad: string | null;
     rol: Rol | null;
+    okunmamisMesaj?: number;
     children: React.ReactNode;
 };
 
-export default function AdminKabuk({ email, ad, rol, children }: Props) {
+export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, children }: Props) {
     const pathname = usePathname();
     const [menuAcik, setMenuAcik] = useState(false);
 
@@ -67,7 +68,7 @@ export default function AdminKabuk({ email, ad, rol, children }: Props) {
                 <nav className="flex-1 space-y-1 overflow-y-auto px-3">
                     {menuOgeleri
                         .filter((m) => !m.izin || izinVar(rol, m.izin))
-                        .map(({ href, etiket, ikon: Ikon }) => (
+                        .map(({ href, etiket, ikon: Ikon, rozet }) => (
                             <Link
                                 key={href}
                                 href={href}
@@ -80,6 +81,14 @@ export default function AdminKabuk({ email, ad, rol, children }: Props) {
                             >
                                 <Ikon className="size-4" />
                                 {etiket}
+                                {rozet === "mesajlar" && okunmamisMesaj > 0 && (
+                                    <span
+                                        className="ml-auto rounded-full bg-white px-1.5 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-primary)]"
+                                        aria-label={`${okunmamisMesaj} okunmamış mesaj`}
+                                    >
+                                        {okunmamisMesaj > 99 ? "99+" : okunmamisMesaj}
+                                    </span>
+                                )}
                             </Link>
                         ))}
                 </nav>

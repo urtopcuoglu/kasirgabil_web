@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Mail, MapPin, Phone, Instagram, Linkedin } from 'lucide-react';
 import { siteIcerigi } from '@/lib/icerik';
 import { telLinki } from '@/lib/schemas/icerik';
+import IletisimFormu from './IletisimFormu';
 
 export const metadata: Metadata = {
     title: 'İletişim | Kasırga Bilgisayar',
@@ -36,59 +37,7 @@ export default async function ContactPage() {
                                 <Mail size={32} />
                                 Bize Ulaşın
                             </h2>
-                            <form className="space-y-4">
-                                <div>
-                                    <label htmlFor="name" className="sr-only">Adınız</label>
-                                    <input
-                                        type="text"
-                                        id="name"
-                                        placeholder="Adınız*"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="surname" className="sr-only">Soyadınız</label>
-                                    <input
-                                        type="text"
-                                        id="surname"
-                                        placeholder="Soyadınız"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="phone" className="sr-only">Telefon Numaranız</label>
-                                    <input
-                                        type="text"
-                                        id="phone"
-                                        placeholder="Telefon Numaranız"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="email" className="sr-only">E-mail Adresiniz</label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        placeholder="E-mail Adresiniz*"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="message" className="sr-only">Mesajınız</label>
-                                    <textarea
-                                        id="message"
-                                        placeholder="Mesajınız*"
-                                        rows={5}
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] resize-none"
-                                    ></textarea>
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="w-auto px-8 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-lg hover:bg-[var(--color-secondary)] transition-colors"
-                                >
-                                    Gönder
-                                </button>
-                            </form>
+                            <IletisimFormu />
                         </div>
                         {/* Sağ Kısım: Harita */}
                         <div className="relative w-full h-[600px] rounded-lg shadow-lg overflow-hidden">

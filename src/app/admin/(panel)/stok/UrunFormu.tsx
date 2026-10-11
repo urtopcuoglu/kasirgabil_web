@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calculator, ChevronDown, Loader2, Save } from "lucide-react";
+import { Calculator, ChevronDown, Globe, Loader2, Save } from "lucide-react";
 import { urunKaydet } from "@/actions/stok";
 import {
     kategoriAgaci,
@@ -23,6 +23,7 @@ import type { RehberKisi } from "@/lib/schemas/rehber";
 import { sayiOku } from "@/lib/schemas/ortak";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Alan, anaButonSinifi, FormHatasi, inputSinifi } from "../../_components/form";
 import KategoriSecici from "./KategoriSecici";
@@ -52,6 +53,8 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
 
     const maliyetDolu = !!urun && [urun.kdv_orani, urun.komisyon_orani, urun.komisyon_tutari, urun.kargo_desi, urun.kargo_ucreti].some((v) => v != null);
     const [maliyetAcik, setMaliyetAcik] = useState(maliyetDolu);
+    // Web sitesinde yayınlama. Şimdilik yalnızca arayüz; veritabanı alanı ve kayıt işlemi henüz yok.
+    const [siteyeEkle, setSiteyeEkle] = useState(false);
     // Komisyonda en son elle girilen alan; satış fiyatı değişince diğeri buna göre yeniden hesaplanır.
     const [sonKomisyonAlani, setSonKomisyonAlani] = useState<"oran" | "tutar">(urun?.komisyon_tutari != null && urun.komisyon_orani == null ? "tutar" : "oran");
 
@@ -329,6 +332,37 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                         <MaliyetOzeti satis={sayi(satis)} hesap={hesap} />
                     </div>
                 )}
+            </fieldset>
+
+            <fieldset className="space-y-3">
+                <legend className="mb-1 font-semibold text-[var(--color-secondary)]">Web Sitesi</legend>
+                <label
+                    htmlFor="siteye_ekle"
+                    className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
+                        siteyeEkle ? "border-green-200 bg-green-50" : "hover:bg-gray-50",
+                    )}
+                >
+                    <Switch
+                        id="siteye_ekle"
+                        checked={siteyeEkle}
+                        onCheckedChange={setSiteyeEkle}
+                        className="mt-0.5 data-[state=checked]:bg-green-600"
+                    />
+                    <span className="min-w-0 flex-1 text-sm">
+                        <span className="flex items-center gap-2 font-medium">
+                            <Globe className="size-4 text-[var(--color-secondary)]" /> Siteye ekle
+                            {siteyeEkle && (
+                                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Yayınlanacak</span>
+                            )}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-gray-500">
+                            {siteyeEkle
+                                ? "Ürün kaydedildiğinde web sitesindeki ürünler sayfasında yayınlanır."
+                                : "Açarsanız ürün web sitesinde yayınlanır. Kapalıyken yalnızca panelde görünür."}
+                        </span>
+                    </span>
+                </label>
             </fieldset>
 
             <FormHatasi mesaj={sunucuHatasi} />
