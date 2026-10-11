@@ -5,6 +5,7 @@ import { siteIcerigi } from "@/lib/icerik";
 import ProductCard from "@/app/component_page/ProductCard";
 import ServiceCard from "@/app/component_page/ServicesCard";
 import BrandCard from "@/app/component_page/BrandCard";
+import ServisSorguKutusu from "@/app/component_page/ServisSorguKutusu";
 
 const productCategories = [
     {
@@ -146,6 +147,9 @@ export default async function Home() {
                             ))}
                         </div>
                     </section>
+
+                    {/* Teknik servis sorgulama */}
+                    <ServisSorguKutusu />
                 </div>
 
                 {/* Hizmetlerimiz Section with Background */}
