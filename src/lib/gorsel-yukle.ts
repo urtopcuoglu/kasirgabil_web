@@ -4,11 +4,11 @@
 import { createClient } from "@/lib/supabase/client";
 
 const IZINLI_TURLER = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-const AZAMI_BOYUT = 5 * 1024 * 1024;
+const AZAMI_BOYUT = 5 * 1024 * 1024; // depo sınırı; alanlar daha küçük sınır verebilir
 
-export async function gorselYukle(dosya: File, klasor: string): Promise<string> {
+export async function gorselYukle(dosya: File, klasor: string, azamiBoyut = AZAMI_BOYUT): Promise<string> {
     if (!IZINLI_TURLER.includes(dosya.type)) throw new Error("Yalnızca JPG, PNG, WEBP veya GIF yüklenebilir.");
-    if (dosya.size > AZAMI_BOYUT) throw new Error("Görsel en fazla 5 MB olabilir.");
+    if (dosya.size > azamiBoyut) throw new Error(`"${dosya.name}" çok büyük. Görsel en fazla ${azamiBoyut / 1024 / 1024} MB olabilir.`);
 
     const uzanti = dosya.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
     const yol = `${klasor}/${new Date().getFullYear()}/${crypto.randomUUID()}.${uzanti}`;

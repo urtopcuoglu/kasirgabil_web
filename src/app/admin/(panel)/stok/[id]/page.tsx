@@ -4,7 +4,7 @@ import { izinVar } from "@/lib/izinler";
 import { oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Pencil, Wallet } from "lucide-react";
+import { ArrowLeft, ExternalLink, Globe, Pencil, Wallet } from "lucide-react";
 import { urunSil } from "@/actions/stok";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -25,6 +25,7 @@ import { SayfaBasligi } from "../../../_components/form";
 import SilButonu from "../../../_components/SilButonu";
 import { MaliyetOzeti } from "../UrunFormu";
 import { DurumRozeti, StokAdedi } from "../UrunRozetleri";
+import SiteStokButonu from "../SiteStokButonu";
 import StokPaneli from "./StokPaneli";
 
 export const metadata: Metadata = {
@@ -178,6 +179,44 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
 {izinVar(o?.rol, "stok_hareket") && (
                         <StokPaneli urunId={u.id} stokAdedi={u.stok_adedi} />
 )}
+                    </BilgiKarti>
+
+                    <BilgiKarti baslik="Web Sitesi">
+                        {!u.sitede ? (
+                            <p className="text-sm text-gray-500">
+                                Sitede yayında değil.
+                                {izinVar(o?.rol, "stok_yonet") && " Yayınlamak için Düzenle'den \"Siteye ekle\" anahtarını açın."}
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
+                                        <Globe className="size-4" /> Sitede yayında
+                                    </span>
+                                    {izinVar(o?.rol, "stok_yonet") && (
+                                        <SiteStokButonu urunId={u.id} sitede={u.sitede} kapali={u.site_stok_kapali} />
+                                    )}
+                                </div>
+                                <p className="text-sm">
+                                    Sitedeki stok durumu:{" "}
+                                    <span className={cn("font-semibold", u.site_stokta ? "text-green-700" : "text-[var(--color-primary)]")}>
+                                        {u.site_stokta ? "Stokta" : "Tükendi"}
+                                    </span>
+                                    {u.site_stok_kapali && <span className="text-xs text-gray-500"> (elle kapatıldı)</span>}
+                                </p>
+                                {u.site_gorseller[0] && (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={u.site_gorseller[0]} alt="" className="aspect-square w-full rounded-md border bg-gray-50 object-contain" />
+                                )}
+                                <p className="font-medium">{u.site_ad}</p>
+                                {u.site_kategori_id && <p className="text-xs text-gray-500">{agac.yol(u.site_kategori_id)}</p>}
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/urun/${u.site_slug}`} target="_blank">
+                                        <ExternalLink /> Sitede görüntüle
+                                    </Link>
+                                </Button>
+                            </div>
+                        )}
                     </BilgiKarti>
 
                     <BilgiKarti baslik="Stok Hareketleri">

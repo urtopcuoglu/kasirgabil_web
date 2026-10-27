@@ -105,29 +105,54 @@ export const kutuEtiketi = (k: Pick<Kutu, "kutu_no" | "marka" | "model">) => `${
 
 // ─── Ürünler ────────────────────────────────────────────────
 
-export const urunSemasi = z.object({
-    kategori_id: z.uuid({ error: "Kategori seçin." }),
-    kutu_id: opsiyonelId,
-    ad: z.string().trim().min(2, { error: "Ürün adı girin." }).max(150, { error: "En fazla 150 karakter girilebilir." }),
-    marka: opsiyonelMetin(60),
-    model: opsiyonelMetin(100),
-    durum: z.enum(["sifir", "ikinci_el"], { error: "Durum seçin." }),
-    seri_no: opsiyonelMetin(100),
-    barkod: opsiyonelMetin(50),
-    tedarikci_id: opsiyonelId,
-    aciklama: opsiyonelMetin(2000),
-    // Yalnızca yeni kayıtta kullanılır (ilk giriş hareketi).
-    stok_adedi: opsiyonelSayi({ max: 100000, tamSayi: true }),
-    // Stok bu sayıya inince özet sayfasında kritik stok uyarısı verilir (boşsa uyarı yok).
-    min_stok: opsiyonelSayi({ max: 100000, tamSayi: true }),
-    satis_fiyati: opsiyonelSayi({ max: 99999999 }),
-    alis_fiyati: opsiyonelSayi({ max: 99999999 }),
-    kdv_orani: z.union([z.literal(""), z.enum(KDV_ORANLARI.map(String) as [string, ...string[]])]),
-    komisyon_orani: opsiyonelSayi({ max: 100 }),
-    komisyon_tutari: opsiyonelSayi({ max: 99999999 }),
-    kargo_desi: opsiyonelSayi({ max: 99999 }),
-    kargo_ucreti: opsiyonelSayi({ max: 99999999 }),
-});
+// Web sitesi görselleri: ürün başına en fazla 6, her biri en fazla 2 MB. İlk görsel kapak olur.
+export const SITE_GORSEL_SAYISI = 6;
+export const SITE_GORSEL_BOYUTU = 2 * 1024 * 1024;
+export const SITE_GORSEL_KLASORU = "urunler";
+
+// Yalnızca panelden "site" deposunun ürün klasörüne yüklenen görseller kabul edilir.
+const SITE_GORSEL_DESENI = new RegExp(`^https://[^/]+/storage/v1/object/public/site/${SITE_GORSEL_KLASORU}/[\\w./-]+$`);
+
+export const urunSemasi = z
+    .object({
+        kategori_id: z.uuid({ error: "Kategori seçin." }),
+        kutu_id: opsiyonelId,
+        ad: z.string().trim().min(2, { error: "Ürün adı girin." }).max(150, { error: "En fazla 150 karakter girilebilir." }),
+        marka: opsiyonelMetin(60),
+        model: opsiyonelMetin(100),
+        durum: z.enum(["sifir", "ikinci_el"], { error: "Durum seçin." }),
+        seri_no: opsiyonelMetin(100),
+        barkod: opsiyonelMetin(50),
+        tedarikci_id: opsiyonelId,
+        aciklama: opsiyonelMetin(2000),
+        // Yalnızca yeni kayıtta kullanılır (ilk giriş hareketi).
+        stok_adedi: opsiyonelSayi({ max: 100000, tamSayi: true }),
+        // Stok bu sayıya inince özet sayfasında kritik stok uyarısı verilir (boşsa uyarı yok).
+        min_stok: opsiyonelSayi({ max: 100000, tamSayi: true }),
+        satis_fiyati: opsiyonelSayi({ max: 99999999 }),
+        alis_fiyati: opsiyonelSayi({ max: 99999999 }),
+        kdv_orani: z.union([z.literal(""), z.enum(KDV_ORANLARI.map(String) as [string, ...string[]])]),
+        komisyon_orani: opsiyonelSayi({ max: 100 }),
+        komisyon_tutari: opsiyonelSayi({ max: 99999999 }),
+        kargo_desi: opsiyonelSayi({ max: 99999 }),
+        kargo_ucreti: opsiyonelSayi({ max: 99999999 }),
+        // Web sitesi: sitede açıkken aşağıdaki alanlar zorunludur (kapalıyken girilenler saklanır).
+        sitede: z.boolean(),
+        site_ad: opsiyonelMetin(150),
+        site_aciklama: opsiyonelMetin(3000),
+        site_kategori_id: opsiyonelId,
+        site_gorseller: z
+            .array(z.string().regex(SITE_GORSEL_DESENI, { error: "Geçersiz görsel." }))
+            .max(SITE_GORSEL_SAYISI, { error: `En fazla ${SITE_GORSEL_SAYISI} görsel eklenebilir.` }),
+    })
+    .superRefine((d, ctx) => {
+        if (!d.sitede) return;
+        const hata = (alan: string, mesaj: string) => ctx.addIssue({ code: "custom", path: [alan], message: mesaj });
+        if (d.site_ad.trim().length < 2) hata("site_ad", "Sitede görünecek ürün adını girin.");
+        if (d.site_aciklama.trim().length < 10) hata("site_aciklama", "Açıklama en az 10 karakter olmalı.");
+        if (!d.site_kategori_id) hata("site_kategori_id", "Sitede görünecek kategoriyi seçin.");
+        if (d.site_gorseller.length === 0) hata("site_gorseller", "En az bir görsel yükleyin.");
+    });
 
 export type UrunGirdisi = z.infer<typeof urunSemasi>;
 
@@ -154,6 +179,14 @@ export type Urun = {
     stok_adedi: number;
     min_stok: number | null;
     kritik: boolean;
+    sitede: boolean;
+    site_ad: string | null;
+    site_aciklama: string | null;
+    site_kategori_id: string | null;
+    site_gorseller: string[];
+    site_slug: string | null;
+    site_stok_kapali: boolean;
+    site_stokta: boolean;
     created_at: string;
     updated_at: string;
 };

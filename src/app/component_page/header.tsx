@@ -9,13 +9,14 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Wrench, Home, Info, Hammer, Mail, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check, Menu, X, BookOpen } from 'lucide-react';
+import { Wrench, Home, Info, Hammer, Mail, MapPin, Phone, Instagram, Linkedin, Landmark, Smartphone, Copy, Check, Menu, X, BookOpen, ShoppingBag } from 'lucide-react';
 import { telLinki, type BankaHesaplari, type Iletisim } from '@/lib/schemas/icerik';
 
 const navLinks = [
     { href: '/', label: 'Anasayfa', icon: Home },
     { href: '/public/about', label: 'Hakkımızda', icon: Info },
     { href: '/services', label: 'Hizmetlerimiz', icon: Wrench },
+    { href: '/urunler', label: 'Ürünler', icon: ShoppingBag },
     { href: '/blog', label: 'Blog', icon: BookOpen },
     { href: '/public/contact', label: 'İletişim', icon: Mail },
     { href: '/services/teknik-servis', label: 'Teknik Servis', icon: Hammer },

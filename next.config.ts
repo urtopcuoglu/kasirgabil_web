@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+    // Stok PDF'i Türkçe karakterler için bu fontları dosyadan okur; dağıtım paketine dahil edilmeli.
+    outputFileTracingIncludes: {
+        "/admin/stok/disa-aktar": ["./src/assets/fonts/*.ttf"],
+    },
     images: {
         remotePatterns: [
             {
@@ -22,8 +26,9 @@ const nextConfig: NextConfig = {
             // Eski WooCommerce ürün sayfaları → anasayfa
             { source: '/u/:slug*', destination: '/', permanent: true },
 
-            // Eski kategori sayfaları → anasayfa
-            { source: '/urunler/:path*', destination: '/', permanent: true },
+            // Eski kategori sayfaları → anasayfa (/urunler artık vitrinin ürünler sayfası)
+            { source: '/urunler/:path+', destination: '/urunler', permanent: true },
+            { source: '/public/products', destination: '/urunler', permanent: true },
 
             // Eski sepet, hesap, ödeme sayfaları → anasayfa
             { source: '/sepet', destination: '/', permanent: true },

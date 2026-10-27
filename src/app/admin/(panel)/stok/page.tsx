@@ -4,15 +4,20 @@ import { izinVar } from "@/lib/izinler";
 import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Eye, Plus, ScanBarcode } from "lucide-react";
+import { Eye, Globe, Pencil, Plus, ScanBarcode } from "lucide-react";
+import { urunSil } from "@/actions/stok";
 import { createClient } from "@/lib/supabase/server";
 import { kategoriAgaci, URUN_DURUMLARI, type Kutu, type Urun, type UrunKategori } from "@/lib/schemas/stok";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, FormHatasi, inputSinifi, SayfaBasligi } from "../../_components/form";
-import { aramaDeseni, FiltreOzeti, FiltreSecimi, linkOlustur, sayfaAraligi, Sayfalama, sayfaOku, secenekOku, uuidMi } from "../../_components/liste";
+import { FiltreOzeti, FiltreSecimi, linkOlustur, sayfaAraligi, Sayfalama, sayfaOku } from "../../_components/liste";
 import OtomatikFiltreFormu from "../../_components/OtomatikFiltreFormu";
+import SilButonu from "../../_components/SilButonu";
+import DisaAktarMenusu from "./DisaAktarMenusu";
+import { filtreParametreleri, SIRALAMALAR, stokFiltreleriOku, stokSorgusu, type StokParametreleri } from "./filtreler";
+import SiteStokButonu from "./SiteStokButonu";
 import StokSekmeleri from "./StokSekmeleri";
 import { DurumRozeti, StokAdedi } from "./UrunRozetleri";
 
@@ -21,41 +26,23 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ q?: string; sayfa?: string; kategori?: string; durum?: string; stok?: string; sirala?: string }>;
+    searchParams: Promise<StokParametreleri & { sayfa?: string }>;
 };
 
 type UrunSatiri = Urun & { kutular: Pick<Kutu, "kutu_no" | "marka" | "model"> | null };
 
-const DURUM_FILTRELERI = ["", "sifir", "ikinci_el"] as const;
-const STOK_FILTRELERI = ["", "var", "yok", "kritik"] as const;
-const SIRALAMALAR = {
-    yeni: { etiket: "En yeni eklenen", sutun: "created_at", artan: false },
-    kod: { etiket: "Stok kodu", sutun: "stok_kodu", artan: true },
-    ad: { etiket: "Ürün adı (A → Z)", sutun: "ad", artan: true },
-    adet_az: { etiket: "Stok adedi (azdan çoğa)", sutun: "stok_adedi", artan: true },
-} as const;
-type Siralama = keyof typeof SIRALAMALAR;
-
 export default async function StokSayfasi({ searchParams }: Props) {
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const q = (p.q ?? "").trim();
-    const kategori = uuidMi(p.kategori) ? p.kategori : undefined;
-    const durum = secenekOku(p.durum, DURUM_FILTRELERI, "");
-    const stok = secenekOku(p.stok, STOK_FILTRELERI, "");
-    const sirala = secenekOku(p.sirala, Object.keys(SIRALAMALAR) as Siralama[], "yeni");
+    const f = stokFiltreleriOku(p);
+    const { q, kategori, durum, stok, site, sirala } = f;
 
-    const filtreler = {
-        q: q || undefined,
-        kategori,
-        durum: durum || undefined,
-        stok: stok || undefined,
-        sirala: sirala === "yeni" ? undefined : sirala,
-    };
+    const filtreler = filtreParametreleri(f);
     const aktifFiltre = Object.values(filtreler).filter(Boolean).length;
 
     const supabase = await createClient();
     const o = await oturum();
+    const yonetici = izinVar(o?.rol, "stok_yonet");
 
     // Barkod okuyucu / elle tam kod: stok kodu, barkod veya seri no tek ürüne denk geliyorsa doğrudan ürüne gidilir.
     // Yalnızca harf/rakam/nokta/tire içeren aramalarda denenir (PostgREST filtre sözdizimi bozulmasın).
@@ -72,28 +59,17 @@ export default async function StokSayfasi({ searchParams }: Props) {
     const kategoriler = (kategoriData ?? []) as UrunKategori[];
     const agac = kategoriAgaci(kategoriler);
 
-    const { sutun, artan } = SIRALAMALAR[sirala];
-    let sorgu = supabase
-        .from("urunler")
-        .select("*, kutular(kutu_no, marka, model)", { count: "exact" })
-        .order(sutun, { ascending: artan })
-        .range(...sayfaAraligi(sayfa));
-
-    if (q) sorgu = sorgu.ilike("arama", aramaDeseni(q));
-    if (kategori) sorgu = sorgu.in("kategori_id", agac.altlariyla(kategori));
-    if (durum) sorgu = sorgu.eq("durum", durum);
-    if (stok === "var") sorgu = sorgu.gt("stok_adedi", 0);
-    if (stok === "yok") sorgu = sorgu.eq("stok_adedi", 0);
-    if (stok === "kritik") sorgu = sorgu.eq("kritik", true);
-
-    const { data, error, count } = await sorgu;
+    const { data, error, count } = await stokSorgusu(supabase, "*, kutular(kutu_no, marka, model)", f, agac, true).range(
+        ...sayfaAraligi(sayfa)
+    );
     const toplam = count ?? 0;
-    const urunler = (data ?? []) as UrunSatiri[];
+    const urunler = (data ?? []) as unknown as UrunSatiri[];
 
     return (
         <div>
             <SayfaBasligi baslik="Stok" aciklama="Ürünler, notebook yedek parça kutuları ve stok hareketleri.">
-{izinVar(o?.rol, "stok_yonet") && (
+                <DisaAktarMenusu sorgu={linkOlustur("", filtreler).slice(1)} />
+{yonetici && (
                 <Button asChild className={anaButonSinifi}>
                     <Link href="/admin/stok/yeni">
                         <Plus /> Yeni Ürün
@@ -106,7 +82,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
 
             <OtomatikFiltreFormu
                 action="/admin/stok"
-                className="mb-3 grid gap-3 rounded-xl border bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
+                className="mb-3 grid gap-3 rounded-xl border bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(5,minmax(0,1fr))]"
             >
                 <label className="flex min-w-0 flex-col gap-1 text-xs font-medium text-gray-500 sm:col-span-2 lg:col-span-1">
                     Ara / Barkod okut
@@ -154,6 +130,16 @@ export default async function StokSayfasi({ searchParams }: Props) {
                     ]}
                 />
                 <FiltreSecimi
+                    etiket="Web Sitesi"
+                    name="site"
+                    deger={site}
+                    secenekler={[
+                        { deger: "", etiket: "Tümü" },
+                        { deger: "evet", etiket: "Sitede yayında" },
+                        { deger: "hayir", etiket: "Sitede değil" },
+                    ]}
+                />
+                <FiltreSecimi
                     etiket="Sıralama"
                     name="sirala"
                     deger={sirala}
@@ -192,8 +178,22 @@ export default async function StokSayfasi({ searchParams }: Props) {
                                         {u.stok_kodu}
                                     </td>
                                     <td className="max-w-[280px] px-4 py-3">
-                                        <p className="truncate font-medium" title={u.ad}>
-                                            {u.ad}
+                                        <p className="flex items-center gap-1.5 font-medium">
+                                            <span className="truncate" title={u.ad}>
+                                                {u.ad}
+                                            </span>
+                                            {u.sitede && (
+                                                <span
+                                                    title={u.site_stok_kapali ? "Sitede yayında · sitede stok kapalı" : "Sitede yayında"}
+                                                    className={cn(
+                                                        "inline-flex shrink-0 rounded-full p-1",
+                                                        u.site_stok_kapali ? "bg-red-50 text-[var(--color-primary)]" : "bg-green-50 text-green-700"
+                                                    )}
+                                                >
+                                                    <Globe className="size-3.5" aria-hidden />
+                                                    <span className="sr-only">Sitede yayında</span>
+                                                </span>
+                                            )}
                                         </p>
                                         <p className="truncate text-xs text-gray-500">
                                             {[u.marka, u.model].filter(Boolean).join(" ") || "—"}
@@ -213,12 +213,28 @@ export default async function StokSayfasi({ searchParams }: Props) {
                                     <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
                                         {u.satis_fiyati != null ? paraYaz(Number(u.satis_fiyati)) : <span className="text-gray-400">—</span>}
                                     </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <Button variant="ghost" size="icon" asChild title="Görüntüle">
-                                            <Link href={`/admin/stok/${u.id}`} aria-label="Görüntüle">
-                                                <Eye />
-                                            </Link>
-                                        </Button>
+                                    <td className="whitespace-nowrap px-2 py-2 text-right">
+                                        <div className="inline-flex items-center">
+                                            <Button variant="ghost" size="icon" asChild title="Görüntüle">
+                                                <Link href={`/admin/stok/${u.id}`} aria-label="Görüntüle">
+                                                    <Eye />
+                                                </Link>
+                                            </Button>
+                                            {yonetici && (
+                                                <>
+                                                    <Button variant="ghost" size="icon" asChild title="Düzenle">
+                                                        <Link href={`/admin/stok/${u.id}/duzenle`} aria-label="Düzenle">
+                                                            <Pencil />
+                                                        </Link>
+                                                    </Button>
+                                                    <SiteStokButonu urunId={u.id} sitede={u.sitede} kapali={u.site_stok_kapali} />
+                                                    <SilButonu
+                                                        onay={`${u.stok_kodu} - "${u.ad}" stok hareketleriyle birlikte silinsin mi? Bu işlem geri alınamaz.`}
+                                                        sil={urunSil.bind(null, u.id)}
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

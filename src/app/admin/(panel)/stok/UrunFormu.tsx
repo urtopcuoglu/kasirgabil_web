@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Alan, anaButonSinifi, FormHatasi, inputSinifi } from "../../_components/form";
 import KategoriSecici from "./KategoriSecici";
+import SiteGorselleri from "./SiteGorselleri";
 
 type Props = {
     kategoriler: UrunKategori[];
@@ -53,8 +54,6 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
 
     const maliyetDolu = !!urun && [urun.kdv_orani, urun.komisyon_orani, urun.komisyon_tutari, urun.kargo_desi, urun.kargo_ucreti].some((v) => v != null);
     const [maliyetAcik, setMaliyetAcik] = useState(maliyetDolu);
-    // Web sitesinde yayınlama. Şimdilik yalnızca arayüz; veritabanı alanı ve kayıt işlemi henüz yok.
-    const [siteyeEkle, setSiteyeEkle] = useState(false);
     // Komisyonda en son elle girilen alan; satış fiyatı değişince diğeri buna göre yeniden hesaplanır.
     const [sonKomisyonAlani, setSonKomisyonAlani] = useState<"oran" | "tutar">(urun?.komisyon_tutari != null && urun.komisyon_orani == null ? "tutar" : "oran");
 
@@ -87,6 +86,11 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
             komisyon_tutari: metin(urun?.komisyon_tutari),
             kargo_desi: metin(urun?.kargo_desi),
             kargo_ucreti: metin(urun?.kargo_ucreti),
+            sitede: urun?.sitede ?? false,
+            site_ad: urun?.site_ad ?? "",
+            site_aciklama: urun?.site_aciklama ?? "",
+            site_kategori_id: urun?.site_kategori_id ?? "",
+            site_gorseller: urun?.site_gorseller ?? [],
         },
     });
 
@@ -94,7 +98,17 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
         control,
         name: ["kategori_id", "satis_fiyati", "alis_fiyati", "kdv_orani", "komisyon_orani", "komisyon_tutari", "kargo_ucreti"],
     });
+    const [siteyeEkle, siteGorselleri] = useWatch({ control, name: ["sitede", "site_gorseller"] });
     const kutulu = !!kategoriId && agac.kutulu(kategoriId);
+
+    // Anahtar açılınca boş site alanları stok bilgileriyle doldurulur; kullanıcı istediği gibi değiştirir.
+    function siteyeEkleDegisti(acik: boolean) {
+        setValue("sitede", acik);
+        if (!acik) return;
+        if (!getValues("site_ad")) setValue("site_ad", getValues("ad"));
+        if (!getValues("site_aciklama")) setValue("site_aciklama", getValues("aciklama"));
+        if (!getValues("site_kategori_id")) setValue("site_kategori_id", getValues("kategori_id"));
+    }
 
     function kategoriSecildi(id: string) {
         setValue("kategori_id", id, { shouldValidate: true });
@@ -346,7 +360,7 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                     <Switch
                         id="siteye_ekle"
                         checked={siteyeEkle}
-                        onCheckedChange={setSiteyeEkle}
+                        onCheckedChange={siteyeEkleDegisti}
                         className="mt-0.5 data-[state=checked]:bg-green-600"
                     />
                     <span className="min-w-0 flex-1 text-sm">
@@ -358,11 +372,47 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                         </span>
                         <span className="mt-0.5 block text-xs text-gray-500">
                             {siteyeEkle
-                                ? "Ürün kaydedildiğinde web sitesindeki ürünler sayfasında yayınlanır."
+                                ? "Ürün kaydedildiğinde web sitesindeki ürünler sayfasında yayınlanır. Sitede fiyat gösterilmez; ziyaretçi WhatsApp veya canlı destekle ulaşır."
                                 : "Açarsanız ürün web sitesinde yayınlanır. Kapalıyken yalnızca panelde görünür."}
                         </span>
                     </span>
                 </label>
+
+                {siteyeEkle && (
+                    <div className="grid gap-4 rounded-lg border border-green-200 p-4 sm:grid-cols-2">
+                        <Alan etiket="Sitede Görünecek Ad" htmlFor="site_ad" hata={errors.site_ad?.message} zorunlu>
+                            <input id="site_ad" aria-invalid={!!errors.site_ad} className={inputSinifi} {...register("site_ad")} />
+                        </Alan>
+                        <Alan etiket="Site Kategorisi" htmlFor="site_kategori_id" hata={errors.site_kategori_id?.message} zorunlu>
+                            <select id="site_kategori_id" aria-invalid={!!errors.site_kategori_id} className={inputSinifi} {...register("site_kategori_id")}>
+                                <option value="">— Kategori seçin —</option>
+                                {agac.sirali.map((k) => (
+                                    <option key={k.id} value={k.id}>
+                                        {k.yol}
+                                    </option>
+                                ))}
+                            </select>
+                        </Alan>
+                        <Alan etiket="Ürün Açıklaması" htmlFor="site_aciklama" hata={errors.site_aciklama?.message} zorunlu className="sm:col-span-2">
+                            <textarea
+                                id="site_aciklama"
+                                rows={5}
+                                placeholder="Ürünün özellikleri, durumu, garanti bilgisi... Ziyaretçiler ürün sayfasında görür."
+                                aria-invalid={!!errors.site_aciklama}
+                                className={inputSinifi}
+                                {...register("site_aciklama")}
+                            />
+                        </Alan>
+                        <Alan etiket="Görseller" htmlFor="site_gorseller" hata={errors.site_gorseller?.message} zorunlu className="sm:col-span-2">
+                            <SiteGorselleri
+                                id="site_gorseller"
+                                gorseller={siteGorselleri}
+                                onChange={(g) => setValue("site_gorseller", g, { shouldValidate: !!errors.site_gorseller, shouldDirty: true })}
+                                gecersiz={!!errors.site_gorseller}
+                            />
+                        </Alan>
+                    </div>
+                )}
             </fieldset>
 
             <FormHatasi mesaj={sunucuHatasi} />

@@ -14,6 +14,7 @@ import {
 } from "@/lib/schemas/kasa";
 import { sayiOku } from "@/lib/schemas/ortak";
 import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
+import { vitrinUrunleriniYenile } from "@/lib/site-urunleri";
 import type { IslemSonucu } from "./personel";
 
 const KASA = "/admin/kasa";
@@ -25,6 +26,7 @@ function kasaYenile() {
     revalidatePath(KASA, "layout");
     revalidatePath("/admin/stok", "layout");
     revalidatePath("/admin/teknik-servis", "layout");
+    vitrinUrunleriniYenile(); // satış stok adedini, dolayısıyla sitedeki stok durumunu değiştirir
 }
 
 // ─── Hareketler ─────────────────────────────────────────────

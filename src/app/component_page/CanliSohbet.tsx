@@ -20,6 +20,10 @@ const YEDEK_YENILEME_MS = 15_000; // Realtime sinyali kaçarsa pencere açıkken
 
 type Kayit = { id: string; anahtar: string };
 
+// Sayfadaki başka bir buton (örn. ürün kartı) pencereyi açabilir; mesaj verilirse başlatma formuna yazılır.
+export const SOHBET_AC_OLAYI = "canli-sohbet-ac";
+export const canliSohbetiAc = (mesaj?: string) => window.dispatchEvent(new CustomEvent(SOHBET_AC_OLAYI, { detail: { mesaj } }));
+
 // Tek istemci, ayrı depolama anahtarıyla: panel oturumunun (aynı tarayıcıda açıksa) istemcisiyle çakışmasın.
 let istemci: SupabaseClient | undefined;
 function sohbetIstemcisi() {
@@ -63,7 +67,17 @@ export default function CanliSohbet({ whatsappVar }: { whatsappVar: boolean }) {
     const [sohbet, setSohbet] = useState<ZiyaretciSohbeti | null>(null);
     const [cevrimici, setCevrimici] = useState<boolean | null>(null);
     const [yeniMesaj, setYeniMesaj] = useState(false);
+    const [taslak, setTaslak] = useState("");
     const acikRef = useRef(acik);
+
+    useEffect(() => {
+        const ac = (e: Event) => {
+            setTaslak((e as CustomEvent<{ mesaj?: string }>).detail?.mesaj ?? "");
+            setAcik(true);
+        };
+        window.addEventListener(SOHBET_AC_OLAYI, ac);
+        return () => window.removeEventListener(SOHBET_AC_OLAYI, ac);
+    }, []);
 
     useEffect(() => {
         acikRef.current = acik;
@@ -154,7 +168,7 @@ export default function CanliSohbet({ whatsappVar }: { whatsappVar: boolean }) {
                             <Loader2 className="animate-spin text-gray-400" />
                         </div>
                     ) : (
-                        <BaslatFormu supabase={supabase} cevrimici={cevrimici} baslatildi={baslatildi} />
+                        <BaslatFormu key={taslak} supabase={supabase} cevrimici={cevrimici} baslatildi={baslatildi} taslak={taslak} />
                     )}
                 </section>
             )}
@@ -180,7 +194,17 @@ export default function CanliSohbet({ whatsappVar }: { whatsappVar: boolean }) {
 
 type Istemci = SupabaseClient;
 
-function BaslatFormu({ supabase, cevrimici, baslatildi }: { supabase: Istemci; cevrimici: boolean | null; baslatildi: (k: Kayit) => void }) {
+function BaslatFormu({
+    supabase,
+    cevrimici,
+    baslatildi,
+    taslak,
+}: {
+    supabase: Istemci;
+    cevrimici: boolean | null;
+    baslatildi: (k: Kayit) => void;
+    taslak: string;
+}) {
     const [sunucuHatasi, setSunucuHatasi] = useState<string>();
     const [bekliyor, startTransition] = useTransition();
     const {
@@ -189,7 +213,7 @@ function BaslatFormu({ supabase, cevrimici, baslatildi }: { supabase: Istemci; c
         formState: { errors },
     } = useForm<SohbetBaslatGirdisi>({
         resolver: zodResolver(sohbetBaslatSemasi),
-        defaultValues: { ad: "", telefon: "", eposta: "", mesaj: "" },
+        defaultValues: { ad: "", telefon: "", eposta: "", mesaj: taslak },
     });
 
     const gonder = handleSubmit((veri) => {

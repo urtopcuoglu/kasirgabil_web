@@ -13,9 +13,12 @@ import {
     type UrunGirdisi,
     type UrunKategori,
 } from "@/lib/schemas/stok";
+import { slugUret } from "@/lib/schemas/icerik";
 import { sayiOku } from "@/lib/schemas/ortak";
+import { depoYolu, vitrinUrunleriniYenile } from "@/lib/site-urunleri";
 import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const STOK = "/admin/stok";
 const KUTULAR = `${STOK}/kutular`;
@@ -159,6 +162,8 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
     const { supabase } = yetki;
 
     const d = sonuc.data;
+    // Yeni üründe kimlik burada üretilir: sitedeki adres (slug) kayıtla birlikte yazılabilsin.
+    const hedefId = id ?? crypto.randomUUID();
     const veri = {
         ...bosIseNull({
             kategori_id: d.kategori_id,
@@ -171,6 +176,9 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
             barkod: d.barkod,
             tedarikci_id: d.tedarikci_id,
             aciklama: d.aciklama,
+            site_ad: d.site_ad,
+            site_aciklama: d.site_aciklama,
+            site_kategori_id: d.site_kategori_id,
         }),
         satis_fiyati: sayiOku(d.satis_fiyati),
         alis_fiyati: sayiOku(d.alis_fiyati),
@@ -180,24 +188,27 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
         kargo_desi: sayiOku(d.kargo_desi),
         kargo_ucreti: sayiOku(d.kargo_ucreti),
         min_stok: sayiOku(d.min_stok),
+        sitede: d.sitede,
+        site_gorseller: d.site_gorseller,
+        // "lenovo-ideapad-slim-3-1a2b3c4d": addaki kimlik parçası, aynı adlı ürünlerin çakışmasını önler.
+        site_slug: d.site_ad ? `${slugUret(d.site_ad) || "urun"}-${hedefId.slice(0, 8)}` : null,
     };
 
-    let hedefId = id;
     if (id) {
+        const { data: eski } = await supabase.from("urunler").select("site_gorseller").eq("id", id).maybeSingle();
         const { error } = await supabase.from("urunler").update(veri).eq("id", id);
         if (error) return { hata: tekillikMesaji(error, URUN_TEKILLIK) };
+        // Formdan kaldırılan görseller depodan da silinir.
+        const eskiGorseller = (eski?.site_gorseller ?? []) as string[];
+        await gorselleriSil(supabase, eskiGorseller.filter((g) => !d.site_gorseller.includes(g)));
     } else {
         // Başlangıç adedi, veritabanında "İlk kayıt" giriş hareketine dönüştürülür.
-        const { data, error } = await supabase
-            .from("urunler")
-            .insert({ ...veri, stok_adedi: sayiOku(d.stok_adedi) ?? 0 })
-            .select("id")
-            .single();
+        const { error } = await supabase.from("urunler").insert({ ...veri, id: hedefId, stok_adedi: sayiOku(d.stok_adedi) ?? 0 });
         if (error) return { hata: tekillikMesaji(error, URUN_TEKILLIK) };
-        hedefId = data.id as string;
     }
 
     revalidatePath(STOK, "layout");
+    vitrinUrunleriniYenile();
     redirect(`${STOK}/${hedefId}`);
 }
 
@@ -207,11 +218,40 @@ export async function urunSil(id: string): Promise<IslemSonucu> {
     const { supabase } = yetki;
 
     // Stok hareketleri cascade ile birlikte silinir.
-    const { error } = await supabase.from("urunler").delete().eq("id", id);
+    const { data, error } = await supabase.from("urunler").delete().eq("id", id).select("site_gorseller").maybeSingle();
     if (error) return { hata: dbHataMesaji(error) };
+    await gorselleriSil(supabase, (data?.site_gorseller ?? []) as string[]);
 
     revalidatePath(STOK, "layout");
+    vitrinUrunleriniYenile();
     redirect(STOK);
+}
+
+// Sitedeki ürünü stok adedinden bağımsız olarak "tükendi" gösterir (veya geri açar). Yalnızca sitedeki ürünlerde.
+export async function siteStokKapat(id: string, kapali: boolean): Promise<IslemSonucu> {
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { supabase } = yetki;
+
+    const { data, error } = await supabase
+        .from("urunler")
+        .update({ site_stok_kapali: kapali })
+        .eq("id", id)
+        .eq("sitede", true)
+        .select("id");
+    if (error) return { hata: dbHataMesaji(error) };
+    if (!data?.length) return { hata: "Ürün sitede yayında değil." };
+
+    revalidatePath(STOK, "layout");
+    vitrinUrunleriniYenile();
+}
+
+// Görsel silinemezse kayıt işlemi bozulmaz; yalnızca depoda artık dosya kalır.
+async function gorselleriSil(supabase: SupabaseClient, adresler: string[]) {
+    const yollar = adresler.map(depoYolu).filter((y): y is string => !!y);
+    if (yollar.length === 0) return;
+    const { error } = await supabase.storage.from("site").remove(yollar);
+    if (error) console.error("[gorselleriSil]", error.message);
 }
 
 // ─── Stok hareketleri ───────────────────────────────────────
@@ -250,4 +290,5 @@ export async function stokHareketiEkle(
     if (error) return { hata: dbHataMesaji(error) };
 
     revalidatePath(STOK, "layout");
+    vitrinUrunleriniYenile();
 }
