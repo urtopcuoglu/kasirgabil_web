@@ -21,7 +21,14 @@ export const SITE_SIRALAMALARI = {
 } as const;
 export type SiteSiralamasi = keyof typeof SITE_SIRALAMALARI;
 
-export type SiteUrunFiltresi = { marka?: string; model?: string; kategori?: string; sirala: SiteSiralamasi; sayfa: number; adet: number };
+export type SiteUrunFiltresi = { ara?: string; marka?: string; model?: string; kategori?: string; sirala: SiteSiralamasi; sayfa: number; adet: number };
+
+// PostgREST "or" filtresinde değer çift tırnak içine alınır; tırnak ve ters bölü kaçırılır.
+// Önce LIKE joker karakterleri (% _ \) metin olarak aransın diye kaçırılır.
+function orIlikeDegeri(q: string) {
+    const likeGuvenli = q.replace(/[\\%_]/g, (k) => `\\${k}`);
+    return `"%${likeGuvenli.replace(/["\\]/g, (k) => `\\${k}`)}%"`;
+}
 
 // Panelde ürün, stok veya görsel değişince vitrin sayfaları yenilenir.
 export function vitrinUrunleriniYenile() {
@@ -67,7 +74,7 @@ export async function siteFiltreSecenekleri(secilenMarka?: string) {
     };
 }
 
-export async function siteUrunleri({ marka, model, kategori, sirala, sayfa, adet }: SiteUrunFiltresi) {
+export async function siteUrunleri({ ara, marka, model, kategori, sirala, sayfa, adet }: SiteUrunFiltresi) {
     const { sutun, artan } = SITE_SIRALAMALARI[sirala];
     let sorgu = anonIstemci()
         .from("urunler")
@@ -77,6 +84,10 @@ export async function siteUrunleri({ marka, model, kategori, sirala, sayfa, adet
         .order("id")
         .range((sayfa - 1) * adet, sayfa * adet - 1);
 
+    if (ara) {
+        const v = orIlikeDegeri(ara);
+        sorgu = sorgu.or(`site_ad.ilike.${v},stok_kodu.ilike.${v}`);
+    }
     if (marka) sorgu = sorgu.eq("marka", marka);
     if (model) sorgu = sorgu.eq("model", model);
     if (kategori) sorgu = sorgu.in("site_kategori_id", (await siteKategoriAgaci()).altlariyla(kategori));

@@ -1,16 +1,16 @@
 // src/app/component_page/UrunFiltreleri.tsx
-// Ürünler sayfasının filtreleri (kategori, marka, model, sıralama). Seçim değişince sayfa yeni adresle yüklenir;
+// Ürünler sayfasının araması (ürün adı veya stok kodu) ve filtreleri (kategori, marka, model, sıralama). Seçim değişince sayfa yeni adresle yüklenir;
 // marka değişince eski markanın modeli sıfırlanır.
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 
 type Secenek = { deger: string; etiket: string };
 
 type Props = {
-    secili: { kategori: string; marka: string; model: string; sirala: string };
+    secili: { ara: string; kategori: string; marka: string; model: string; sirala: string };
     kategoriler: Secenek[];
     markalar: string[];
     modeller: string[];
@@ -32,7 +32,13 @@ export default function UrunFiltreleri({ secili, kategoriler, markalar, modeller
         router.push(s ? `/urunler?${s}` : "/urunler", { scroll: false });
     };
 
-    const aktif = !!(secili.kategori || secili.marka || secili.model);
+    const aktif = !!(secili.ara || secili.kategori || secili.marka || secili.model);
+
+    const aramaGonder = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const ara = String(new FormData(e.currentTarget).get("ara") ?? "").trim();
+        if (ara !== secili.ara) git({ ara });
+    };
 
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -46,6 +52,27 @@ export default function UrunFiltreleri({ secili, kategoriler, markalar, modeller
                     </Link>
                 )}
             </div>
+            <form role="search" onSubmit={aramaGonder} className="mb-3 flex gap-2">
+                <label className="relative flex-1">
+                    <span className="sr-only">Ürün adı veya stok kodu ile ara</span>
+                    <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                        key={secili.ara}
+                        type="search"
+                        name="ara"
+                        defaultValue={secili.ara}
+                        maxLength={100}
+                        placeholder="Ürün adı veya stok kodu ile ara…"
+                        className={`${secimSinifi} pl-10`}
+                    />
+                </label>
+                <button
+                    type="submit"
+                    className="rounded-xl bg-[var(--color-primary)] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                >
+                    Ara
+                </button>
+            </form>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <Secim etiket="Kategori" deger={secili.kategori} onChange={(v) => git({ kategori: v })} secenekler={[{ deger: "", etiket: "Tüm kategoriler" }, ...kategoriler]} />
                 <Secim

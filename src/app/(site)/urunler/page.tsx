@@ -16,13 +16,14 @@ export const metadata: Metadata = {
 
 const ADET = 24;
 
-type Props = { searchParams: Promise<{ kategori?: string; marka?: string; model?: string; sirala?: string; sayfa?: string }> };
+type Props = { searchParams: Promise<{ ara?: string; kategori?: string; marka?: string; model?: string; sirala?: string; sayfa?: string }> };
 
 // Kısa ve düz metin kabul edilir (elle bozulmuş adreslere karşı).
 const metinOku = (v?: string) => (v && v.length <= 100 ? v.trim() : "");
 
 export default async function UrunlerSayfasi({ searchParams }: Props) {
     const p = await searchParams;
+    const ara = metinOku(p.ara);
     const marka = metinOku(p.marka);
     const model = metinOku(p.model);
     const kategori = p.kategori && /^[0-9a-f-]{36}$/i.test(p.kategori) ? p.kategori : "";
@@ -30,7 +31,7 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
     const sayfa = Math.max(1, Number.parseInt(p.sayfa ?? "1", 10) || 1);
 
     const [{ urunler, toplam }, secenekler, iletisim] = await Promise.all([
-        siteUrunleri({ marka, model, kategori, sirala, sayfa, adet: ADET }),
+        siteUrunleri({ ara, marka, model, kategori, sirala, sayfa, adet: ADET }),
         siteFiltreSecenekleri(marka || undefined),
         siteIcerigi("iletisim"),
     ]);
@@ -39,6 +40,7 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
 
     const link = (s: number) => {
         const q = new URLSearchParams();
+        if (ara) q.set("ara", ara);
         if (kategori) q.set("kategori", kategori);
         if (marka) q.set("marka", marka);
         if (model) q.set("model", model);
@@ -47,7 +49,7 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
         const metin = q.toString();
         return metin ? `/urunler?${metin}` : "/urunler";
     };
-    const filtreli = !!(kategori || marka || model);
+    const filtreli = !!(ara || kategori || marka || model);
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50 dark:bg-zinc-800">
@@ -65,7 +67,7 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
 
             <div className="container mx-auto max-w-7xl px-4 py-10">
                 <UrunFiltreleri
-                    secili={{ kategori, marka, model, sirala }}
+                    secili={{ ara, kategori, marka, model, sirala }}
                     kategoriler={secenekler.kategoriler.map((k) => ({ deger: k.id, etiket: `${"  ".repeat(k.derinlik)}${k.ad}` }))}
                     markalar={secenekler.markalar}
                     modeller={secenekler.modeller}
@@ -79,7 +81,7 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
                         <PackageSearch size={40} className="text-gray-300" />
                         {filtreli ? (
                             <>
-                                Seçtiğiniz filtrelere uygun ürün bulunamadı.
+                                {ara ? `"${ara}" aramasına uygun ürün bulunamadı.` : "Seçtiğiniz filtrelere uygun ürün bulunamadı."}
                                 <Link href="/urunler" className="font-medium text-[var(--color-primary)] hover:underline">
                                     Tüm ürünleri göster
                                 </Link>

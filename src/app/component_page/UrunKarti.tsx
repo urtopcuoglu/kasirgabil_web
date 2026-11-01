@@ -51,7 +51,12 @@ export default function UrunKarti({ urun, kategori, whatsapp }: Props) {
 
             <div className="flex flex-1 flex-col gap-3 p-4">
                 <div className="flex-1 space-y-1">
-                    {kategori && <p className="truncate text-xs font-medium uppercase tracking-wide text-gray-500">{kategori}</p>}
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                        <p className="truncate font-medium uppercase tracking-wide text-gray-500">{kategori}</p>
+                        <span className="shrink-0 rounded-md bg-gray-100 px-2 py-0.5 font-mono text-gray-600 dark:bg-zinc-800 dark:text-zinc-300" title="Stok kodu">
+                            {urun.stok_kodu}
+                        </span>
+                    </div>
                     <h3 className="line-clamp-2 font-semibold text-gray-900 transition-colors group-hover:text-[var(--color-primary)] dark:text-zinc-100">
                         <Link href={href}>{urun.site_ad}</Link>
                     </h3>
