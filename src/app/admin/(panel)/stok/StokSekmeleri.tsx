@@ -4,6 +4,7 @@ import Sekmeler from "../../_components/Sekmeler";
 const SEKMELER = [
     { href: "/admin/stok", etiket: "Ürünler" },
     { href: "/admin/stok/kutular", etiket: "Kutular" },
+    { href: "/admin/stok/markalar", etiket: "Marka & Model" },
     { href: "/admin/stok/kategoriler", etiket: "Kategoriler" },
 ] as const;
 

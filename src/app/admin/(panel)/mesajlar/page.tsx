@@ -5,6 +5,7 @@ import { Mail, Phone, Reply, Search } from "lucide-react";
 import { mesajSil } from "@/actions/iletisim";
 import type { IletisimMesaji } from "@/lib/schemas/iletisim";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { dbHataMesaji, izinGerekli } from "@/lib/supabase/yetkili";
 import { tarihSaatYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ q?: string; sayfa?: string; durum?: string }>;
+    searchParams: Promise<{ sayfa?: string; durum?: string }>;
 };
 
 const DURUMLAR = ["", "okunmamis", "okundu"] as const;
@@ -30,7 +31,7 @@ export default async function MesajlarSayfasi({ searchParams }: Props) {
 
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/mesajlar"); // adreste değil çerezde (src/lib/panel-arama.ts)
     const durum = secenekOku(p.durum, DURUMLAR, "");
 
     const filtreler = { q: q || undefined, durum: durum || undefined };

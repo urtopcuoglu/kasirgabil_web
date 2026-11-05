@@ -7,13 +7,14 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Eye, Plus } from "lucide-react";
 import { kutuSil } from "@/actions/stok";
 import { createClient } from "@/lib/supabase/server";
-import type { Kutu, Urun } from "@/lib/schemas/stok";
+import { kutuEtiketi, type Kutu, type Urun } from "@/lib/schemas/stok";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { anaButonSinifi, SayfaBasligi } from "../../../../_components/form";
 import SilButonu from "../../../../_components/SilButonu";
 import { DurumRozeti, StokAdedi } from "../../UrunRozetleri";
 import KutuDuzenle from "./KutuDuzenle";
+import UrunDonusBandi from "../../UrunDonusBandi";
 
 export const metadata: Metadata = {
     title: "Kutu",
@@ -23,8 +24,14 @@ type Detay = Kutu & {
     urunler: Pick<Urun, "id" | "stok_kodu" | "ad" | "durum" | "stok_adedi" | "satis_fiyati" | "seri_no">[];
 };
 
-export default async function KutuDetaySayfasi({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export default async function KutuDetaySayfasi({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ donus?: string }>;
+}) {
+    const [{ id }, { donus }] = await Promise.all([params, searchParams]);
     const supabase = await createClient();
     const o = await oturum();
     const [{ data }, { data: tumKutular }] = await Promise.all([
@@ -44,7 +51,7 @@ export default async function KutuDetaySayfasi({ params }: { params: Promise<{ i
         <div>
             <SayfaBasligi baslik={`Kutu ${k.kutu_no}`} aciklama={`${k.marka} ${k.model}${k.konum ? ` · ${k.konum}` : ""}`}>
                 <Button variant="outline" asChild>
-                    <Link href="/admin/stok/kutular">
+                    <Link href={donus === "urun" ? "/admin/stok/kutular?donus=urun" : "/admin/stok/kutular"}>
                         <ArrowLeft /> Kutular
                     </Link>
                 </Button>
@@ -59,6 +66,9 @@ export default async function KutuDetaySayfasi({ params }: { params: Promise<{ i
                     <SilButonu onay={`Kutu ${k.kutu_no} (${k.marka} ${k.model}) silinsin mi?`} sil={kutuSil.bind(null, k.id)} etiket="Sil" />
                 )}
             </SayfaBasligi>
+
+            {/* Ürün formundan "yeni kutu aç" ile gelindi: taslağa bu kutu seçili olarak dönülür. */}
+            {donus === "urun" && izinVar(o?.rol, "stok_yonet") && <UrunDonusBandi kutuId={k.id} kutuEtiketi={kutuEtiketi(k)} />}
 
             <div className="grid gap-4 lg:grid-cols-3">
                 <section className="rounded-xl border bg-white shadow-sm lg:col-span-2">

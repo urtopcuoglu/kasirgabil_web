@@ -27,6 +27,8 @@ import { MaliyetOzeti } from "../UrunFormu";
 import { DurumRozeti, StokAdedi } from "../UrunRozetleri";
 import SiteStokButonu from "../SiteStokButonu";
 import StokPaneli from "./StokPaneli";
+import DonanimPuaniKarti from "./DonanimPuaniKarti";
+import { DONANIM_SUTUNLARI, donanimOnerisi, urunEslesmeMetni, type DonanimPuani } from "@/lib/donanim-puanlari";
 
 export const metadata: Metadata = {
     title: "Ürün",
@@ -36,6 +38,7 @@ type Detay = Urun & {
     kutular: Pick<Kutu, "id" | "kutu_no" | "marka" | "model"> | null;
     tedarikci: Pick<RehberKisi, "id" | "ad_soyad_unvan"> | null;
     stok_hareketleri: StokHareketi[];
+    donanim_puanlari: DonanimPuani | null;
 };
 
 // Postgres numeric değerleri JSON'da metin olarak gelebilir.
@@ -49,7 +52,7 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
         supabase
             .from("urunler")
             .select(
-                "*, kutular(id, kutu_no, marka, model), tedarikci:rehber_kisiler(id, ad_soyad_unvan), stok_hareketleri(id, tip, miktar, aciklama, created_at)"
+                `*, kutular(id, kutu_no, marka, model), tedarikci:rehber_kisiler(id, ad_soyad_unvan), stok_hareketleri(id, tip, miktar, aciklama, created_at), donanim_puanlari(${DONANIM_SUTUNLARI})`
             )
             .eq("id", id)
             .order("created_at", { referencedTable: "stok_hareketleri", ascending: false })
@@ -60,6 +63,8 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
     if (!data) notFound();
     const u = data as Detay;
     const agac = kategoriAgaci((kategoriData ?? []) as UrunKategori[]);
+    // Donanım bağlanmamışsa ürün adındaki model numarasından UserBenchmark önerisi.
+    const donanimOneri = u.donanim_puanlari ? null : await donanimOnerisi(supabase, urunEslesmeMetni(u));
     const satis = sayi(u.satis_fiyati);
     const maliyetGirilmis =
         !!u.kdv_orani || u.komisyon_orani != null || u.komisyon_tutari != null || u.kargo_ucreti != null;
@@ -217,6 +222,16 @@ export default async function UrunDetaySayfasi({ params }: { params: Promise<{ i
                                 </Button>
                             </div>
                         )}
+                    </BilgiKarti>
+
+                    <BilgiKarti baslik="Donanım Puanı (UserBenchmark)">
+                        <DonanimPuaniKarti
+                            urunId={u.id}
+                            aramaOnerisi={[u.marka, u.model].filter(Boolean).join(" ") || u.ad}
+                            bagli={u.donanim_puanlari}
+                            oneri={donanimOneri}
+                            duzenlenebilir={izinVar(o?.rol, "stok_yonet")}
+                        />
                     </BilgiKarti>
 
                     <BilgiKarti baslik="Stok Hareketleri">

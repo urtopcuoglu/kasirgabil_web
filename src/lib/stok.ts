@@ -2,11 +2,14 @@
 // Stok sayfalarının sunucu tarafı veri yükleyicileri.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { TEDARIKCI_KODU, type RehberKisi } from "@/lib/schemas/rehber";
-import { kategoriAgaci, type Kutu, type Urun, type UrunKategori } from "@/lib/schemas/stok";
+import { kategoriAgaci, type Kutu, type Urun, type UrunKategori, type UrunMarkasi, type UrunModeli } from "@/lib/schemas/stok";
 
-// Ürün formundaki seçim listeleri: kategoriler, kutular ve tedarikçi kategorisindeki rehber kişileri.
+// Marka/model seçicisi ve "bu marka/model zaten kayıtlı" uyarısı için markası girilmiş ürünler.
+export type MarkaliUrun = Pick<Urun, "id" | "stok_kodu" | "ad" | "marka" | "model" | "kutu_id">;
+
+// Ürün formundaki seçim listeleri: kategoriler, kutular, tedarikçi kategorisindeki rehber kişileri ve markalı ürünler.
 export async function urunFormuVerisi(supabase: SupabaseClient) {
-    const [kategoriler, kutular, tedarikciler] = await Promise.all([
+    const [kategoriler, kutular, tedarikciler, markaliUrunler, markaModel] = await Promise.all([
         supabase.from("urun_kategorileri").select("id, ad, ust_id, kutu_sistemi"),
         supabase.from("kutular").select("id, kutu_no, marka, model").order("kutu_no"),
         supabase
@@ -14,13 +17,45 @@ export async function urunFormuVerisi(supabase: SupabaseClient) {
             .select("id, ad_soyad_unvan, firma, rehber_kategorileri!inner(kod)")
             .eq("rehber_kategorileri.kod", TEDARIKCI_KODU)
             .order("ad_soyad_unvan"),
+        sayfaSayfaOku<MarkaliUrun>((bas, son) =>
+            supabase
+                .from("urunler")
+                .select("id, stok_kodu, ad, marka, model, kutu_id")
+                .not("marka", "is", null)
+                .order("id")
+                .range(bas, son),
+        ),
+        markaModelListesi(supabase),
     ]);
 
     return {
         kategoriler: (kategoriler.data ?? []) as UrunKategori[],
         kutular: (kutular.data ?? []) as Pick<Kutu, "id" | "kutu_no" | "marka" | "model">[],
         tedarikciler: (tedarikciler.data ?? []) as Pick<RehberKisi, "id" | "ad_soyad_unvan" | "firma">[],
+        markaliUrunler,
+        ...markaModel,
     };
+}
+
+// Marka ve model listeleri (ürün formundaki açılır listeler ve Marka & Model paneli).
+export async function markaModelListesi(supabase: SupabaseClient) {
+    const [markalar, modeller] = await Promise.all([
+        sayfaSayfaOku<UrunMarkasi>((bas, son) => supabase.from("urun_markalari").select("id, ad").order("id").range(bas, son)),
+        sayfaSayfaOku<UrunModeli>((bas, son) => supabase.from("urun_modelleri").select("id, marka_id, ad").order("id").range(bas, son)),
+    ]);
+    const sirala = <T extends { ad: string }>(liste: T[]) => liste.toSorted((a, b) => a.ad.localeCompare(b.ad, "tr"));
+    return { markalar: sirala(markalar), modeller: sirala(modeller) };
+}
+
+// PostgREST tek istekte en fazla 1000 satır döndürür; liste sayfa sayfa okunur.
+async function sayfaSayfaOku<T>(sorgu: (bas: number, son: number) => PromiseLike<{ data: unknown[] | null }>) {
+    const SAYFA = 1000;
+    const sonuc: T[] = [];
+    for (let bas = 0; ; bas += SAYFA) {
+        const { data } = await sorgu(bas, bas + SAYFA - 1);
+        sonuc.push(...((data ?? []) as T[]));
+        if (!data || data.length < SAYFA) return sonuc;
+    }
 }
 
 // ─── Özet sayfası stok metrikleri ───────────────────────────

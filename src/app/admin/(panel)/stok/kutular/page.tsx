@@ -5,6 +5,8 @@ import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { ChevronDown, Eye, PackagePlus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
+import { panelFiltreUygula } from "@/actions/panel-arama";
 import type { Kutu } from "@/lib/schemas/stok";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,6 +14,7 @@ import { FormHatasi, inputSinifi, SayfaBasligi } from "../../../_components/form
 import { aramaDeseni, FiltreOzeti, linkOlustur } from "../../../_components/liste";
 import StokSekmeleri from "../StokSekmeleri";
 import KutuFormu from "./KutuFormu";
+import UrunDonusBandi from "../UrunDonusBandi";
 
 export const metadata: Metadata = {
     title: "Kutular",
@@ -19,8 +22,12 @@ export const metadata: Metadata = {
 
 type KutuSatiri = Kutu & { urunler: { count: number }[] };
 
-export default async function KutularSayfasi({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-    const q = ((await searchParams).q ?? "").trim();
+export default async function KutularSayfasi({ searchParams }: { searchParams: Promise<{ donus?: string }> }) {
+    const p = await searchParams;
+    const q = await panelAramasiOku("/admin/stok/kutular"); // adreste değil çerezde (src/lib/panel-arama.ts)
+    // Ürün formundan "yeni kutu aç" ile gelindi: geri dönüş bandı gösterilir, kutu linkleri bu bilgiyi taşır.
+    const urundenGelindi = p.donus === "urun";
+    const donusEki = urundenGelindi ? "?donus=urun" : "";
     const supabase = await createClient();
     const o = await oturum();
 
@@ -43,19 +50,23 @@ export default async function KutularSayfasi({ searchParams }: { searchParams: P
 
             <StokSekmeleri aktif="/admin/stok/kutular" />
 
+            {urundenGelindi && <UrunDonusBandi />}
+
             {izinVar(o?.rol, "stok_yonet") && (
-            <details className="group mb-4 rounded-xl border bg-white shadow-sm" open={kutular.length === 0 && !q}>
+            <details className="group mb-4 rounded-xl border bg-white shadow-sm" open={(kutular.length === 0 && !q) || urundenGelindi}>
                 <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-3 font-semibold text-[var(--color-secondary)]">
                     <PackagePlus className="size-4" /> Yeni Kutu Aç
                     <ChevronDown className="ml-auto size-4 transition group-open:rotate-180" />
                 </summary>
                 <div className="border-t p-4">
-                    <KutuFormu kutular={tumKutular ?? []} />
+                    <KutuFormu kutular={tumKutular ?? []} urundenGelindi={urundenGelindi} />
                 </div>
             </details>
             )}
 
-            <form action="/admin/stok/kutular" className="mb-3 flex gap-2 rounded-xl border bg-white p-3 shadow-sm">
+            <form action={panelFiltreUygula} className="mb-3 flex gap-2 rounded-xl border bg-white p-3 shadow-sm">
+                <input type="hidden" name="_yol" value="/admin/stok/kutular" />
+                {urundenGelindi && <input type="hidden" name="donus" value="urun" />}
                 <div className="relative flex-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
                     <input
@@ -110,7 +121,7 @@ export default async function KutularSayfasi({ searchParams }: { searchParams: P
                                     <td className="px-4 py-3 text-right tabular-nums">{k.urunler[0]?.count ?? 0}</td>
                                     <td className="px-4 py-3 text-right">
                                         <Button variant="ghost" size="icon" asChild title="Kutuyu aç">
-                                            <Link href={`/admin/stok/kutular/${k.id}`} aria-label="Kutuyu aç">
+                                            <Link href={`/admin/stok/kutular/${k.id}${donusEki}`} aria-label="Kutuyu aç">
                                                 <Eye />
                                             </Link>
                                         </Button>

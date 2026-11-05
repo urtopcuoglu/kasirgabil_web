@@ -1,11 +1,12 @@
 // src/app/admin/(panel)/stok/UrunFormu.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Calculator, ChevronDown, Globe, Loader2, Save } from "lucide-react";
+import { AlertTriangle, Calculator, ChevronDown, FileClock, Globe, Loader2, PackagePlus, Save, Trash2 } from "lucide-react";
 import { urunKaydet } from "@/actions/stok";
 import {
     kategoriAgaci,
@@ -18,14 +19,18 @@ import {
     type Urun,
     type UrunGirdisi,
     type UrunKategori,
+    type UrunMarkasi,
+    type UrunModeli,
 } from "@/lib/schemas/stok";
 import type { RehberKisi } from "@/lib/schemas/rehber";
-import { sayiOku } from "@/lib/schemas/ortak";
+import { adAnahtari, sayiOku } from "@/lib/schemas/ortak";
+import type { MarkaliUrun } from "@/lib/stok";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Alan, anaButonSinifi, FormHatasi, inputSinifi } from "../../_components/form";
+import AramaliSecici, { type SeciciSecenegi } from "./AramaliSecici";
 import KategoriSecici from "./KategoriSecici";
 import SiteGorselleri from "./SiteGorselleri";
 
@@ -33,16 +38,69 @@ type Props = {
     kategoriler: UrunKategori[];
     kutular: Pick<Kutu, "id" | "kutu_no" | "marka" | "model">[];
     tedarikciler: Pick<RehberKisi, "id" | "ad_soyad_unvan" | "firma">[];
+    markaliUrunler: MarkaliUrun[]; // mükerrer kayıt uyarısı için
+    markalar: UrunMarkasi[]; // marka/model açılır listeleri (Stok › Marka & Model)
+    modeller: UrunModeli[];
     urun?: Urun; // verilmezse yeni kayıt
-    baslangicKutuId?: string; // kutu sayfasından "parça ekle" ile gelindiyse
+    baslangicKutuId?: string; // kutu sayfasından "parça ekle" veya "ürüne geri dön" ile gelindiyse
 };
+
+// ─── Taslak ─────────────────────────────────────────────────
+// Yeni ürün formu yazdıkça bu tarayıcıda saklanır; sayfadan çıkılsa da (örn. yeni kutu açmaya gidilince)
+// geri gelindiğinde kaldığı yerden devam eder. Ürün kaydedilince veya "Taslağı sil" ile silinir.
+const TASLAK_ANAHTARI = "kasirga:stok:yeni-urun-taslagi";
+type Taslak = { degerler: Partial<UrunGirdisi>; zaman: number };
+
+function taslakOku(): Taslak | null {
+    try {
+        const ham = localStorage.getItem(TASLAK_ANAHTARI);
+        const t = ham ? (JSON.parse(ham) as Taslak) : null;
+        return t && typeof t.zaman === "number" && t.degerler && typeof t.degerler === "object" ? t : null;
+    } catch {
+        return null;
+    }
+}
+
+function taslakYaz(degerler: Partial<UrunGirdisi>): number | null {
+    try {
+        const zaman = Date.now();
+        localStorage.setItem(TASLAK_ANAHTARI, JSON.stringify({ degerler, zaman } satisfies Taslak));
+        return zaman;
+    } catch {
+        return null; // gizli sekme / dolu depolama: taslak tutulamaz, form çalışmaya devam eder
+    }
+}
+
+function taslakSil() {
+    try {
+        localStorage.removeItem(TASLAK_ANAHTARI);
+    } catch {
+        // depolamaya erişilemiyorsa silinecek taslak da yoktur
+    }
+}
+
+const saatYaz = (zaman: number) => new Date(zaman).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+
+// Aynı adın farklı yazımları (Lenovo / LENOVO) tek seçenek olur; ilk görülen yazım gösterilir.
+function benzersizAdlar(adlar: (string | null | undefined)[]): SeciciSecenegi[] {
+    const harita = new Map<string, string>();
+    for (const a of adlar) {
+        const ad = a?.trim().replace(/\s+/g, " ");
+        if (ad && !harita.has(adAnahtari(ad))) harita.set(adAnahtari(ad), ad);
+    }
+    return [...harita.values()].toSorted((x, y) => x.localeCompare(y, "tr")).map((ad) => ({ deger: ad, etiket: ad }));
+}
 
 // Sayı → form metni ("1250.5" → "1250,5"); boşsa "".
 const metin = (v: number | null | undefined) => (v == null ? "" : String(v).replace(".", ","));
 const yuvarla = (v: number) => String(Math.round(v * 100) / 100).replace(".", ",");
 
-export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, baslangicKutuId }: Props) {
+export default function UrunFormu({ kategoriler, kutular, tedarikciler, markaliUrunler, markalar, modeller, urun, baslangicKutuId }: Props) {
+    const router = useRouter();
     const [sunucuHatasi, setSunucuHatasi] = useState<string>();
+    // Yalnızca yeni kayıtta: geri yüklenen / son kaydedilen taslağın zamanı.
+    const [taslak, setTaslak] = useState<{ zaman: number; geriYuklendi: boolean } | null>(null);
+    const taslakHazir = useRef(false);
     const [bekliyor, startTransition] = useTransition();
     // Seçiciden eklenen yeni kategoriler de listeye katılır.
     const [kategoriListesi, setKategoriListesi] = useState(kategoriler);
@@ -57,18 +115,10 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
     // Komisyonda en son elle girilen alan; satış fiyatı değişince diğeri buna göre yeniden hesaplanır.
     const [sonKomisyonAlani, setSonKomisyonAlani] = useState<"oran" | "tutar">(urun?.komisyon_tutari != null && urun.komisyon_orani == null ? "tutar" : "oran");
 
-    const {
-        register,
-        handleSubmit,
-        setValue,
-        getValues,
-        control,
-        formState: { errors },
-    } = useForm<UrunGirdisi>({
-        resolver: zodResolver(urunSemasi),
-        defaultValues: {
+    const varsayilanlar: UrunGirdisi = {
             kategori_id: urun?.kategori_id ?? varsayilanKategori,
             kutu_id: urun?.kutu_id ?? baslangicKutuId ?? "",
+            stok_kodu: urun?.stok_kodu ?? "",
             ad: urun?.ad ?? "",
             marka: urun?.marka ?? baslangicKutusu?.marka ?? "",
             model: urun?.model ?? baslangicKutusu?.model ?? "",
@@ -91,15 +141,122 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
             site_aciklama: urun?.site_aciklama ?? "",
             site_kategori_id: urun?.site_kategori_id ?? "",
             site_gorseller: urun?.site_gorseller ?? [],
-        },
+    };
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        getValues,
+        reset,
+        watch,
+        control,
+        formState: { errors },
+    } = useForm<UrunGirdisi>({
+        resolver: zodResolver(urunSemasi),
+        defaultValues: varsayilanlar,
     });
+
+    // Açılışta taslak varsa geri yüklenir. Kutu sayfasından dönülürse (?kutu=) o kutu seçilir.
+    useEffect(() => {
+        if (urun) return;
+        const kayit = taslakOku();
+        if (kayit) {
+            const v: UrunGirdisi = { ...varsayilanlar, ...kayit.degerler };
+            if (baslangicKutusu) {
+                v.kutu_id = baslangicKutusu.id;
+                if (!v.kategori_id || !agac.kutulu(v.kategori_id)) v.kategori_id = varsayilanKategori;
+                if (!v.marka) v.marka = baslangicKutusu.marka;
+                if (!v.model) v.model = baslangicKutusu.model;
+            }
+            // Taslaktaki kutu bu arada silinmişse seçim boşaltılır.
+            if (v.kutu_id && !kutular.some((k) => k.id === v.kutu_id)) v.kutu_id = "";
+            reset(v);
+            setTaslak({ zaman: kayit.zaman, geriYuklendi: true });
+        }
+        taslakHazir.current = true;
+        // Yalnızca ilk açılışta çalışır.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Yazdıkça taslak kaydedilir (yarım saniye bekleyerek).
+    useEffect(() => {
+        if (urun) return;
+        let zamanlayici: ReturnType<typeof setTimeout> | undefined;
+        const abonelik = watch((degerler) => {
+            if (!taslakHazir.current) return;
+            clearTimeout(zamanlayici);
+            zamanlayici = setTimeout(() => {
+                const zaman = taslakYaz(degerler as Partial<UrunGirdisi>);
+                if (zaman) setTaslak((t) => ({ zaman, geriYuklendi: t?.geriYuklendi ?? false }));
+            }, 500);
+        });
+        return () => {
+            clearTimeout(zamanlayici);
+            abonelik.unsubscribe();
+        };
+    }, [urun, watch]);
+
+    function taslagiKaydet() {
+        const zaman = taslakYaz(getValues());
+        if (zaman) setTaslak((t) => ({ zaman, geriYuklendi: t?.geriYuklendi ?? false }));
+    }
+
+    function taslagiSil() {
+        taslakHazir.current = false;
+        reset(varsayilanlar);
+        taslakSil();
+        setTaslak(null);
+        // reset'in tetiklediği izleme bittikten sonra otomatik kayıt yeniden açılır.
+        setTimeout(() => {
+            taslakHazir.current = true;
+        }, 0);
+    }
+
+    // Ürün formundan kutu açmaya gidilir; taslak hemen yazılır, kutu açılınca "Ürüne geri dön" ile dönülür.
+    function yeniKutuAc() {
+        if (urun) {
+            window.open("/admin/stok/kutular", "_blank", "noopener");
+            return;
+        }
+        taslagiKaydet();
+        router.push("/admin/stok/kutular?donus=urun");
+    }
 
     const [kategoriId, satis, alis, kdv, komOran, komTutar, kargo] = useWatch({
         control,
         name: ["kategori_id", "satis_fiyati", "alis_fiyati", "kdv_orani", "komisyon_orani", "komisyon_tutari", "kargo_ucreti"],
     });
     const [siteyeEkle, siteGorselleri] = useWatch({ control, name: ["sitede", "site_gorseller"] });
+    const [kutuId, marka, model] = useWatch({ control, name: ["kutu_id", "marka", "model"] });
     const kutulu = !!kategoriId && agac.kutulu(kategoriId);
+
+    // Seçenekler Marka & Model panelindeki kayıtlardan gelir; model listesi seçili markaya göre daralır.
+    // Listede olmayan marka/model formdan eklenebilir; ürün kaydedilince veritabanı onu da listeye ekler.
+    const markaSecenekleri = benzersizAdlar(markalar.map((m) => m.ad));
+    const markaAnahtari = adAnahtari(marka);
+    const seciliMarka = markalar.find((m) => adAnahtari(m.ad) === markaAnahtari);
+    const modelSecenekleri = seciliMarka ? benzersizAdlar(modeller.filter((m) => m.marka_id === seciliMarka.id).map((m) => m.ad)) : [];
+    const kutuSecenekleri: SeciciSecenegi[] = kutular.map((k) => ({ deger: k.id, etiket: kutuEtiketi(k), arama: `${k.kutu_no} ${k.marka} ${k.model}` }));
+
+    // Aynı marka/model daha önce kaydedildiyse uyarı. Yedek parçada aynı cihazın birçok parçası olur;
+    // orada ürün yerine bu marka/model için açılmış başka bir kutu varsa söylenir.
+    const modelAnahtari = adAnahtari(model);
+    const ayniMarkaModel = !!markaAnahtari && !!modelAnahtari;
+    const kayitliAyniUrunler =
+        ayniMarkaModel && !kutulu
+            ? markaliUrunler.filter((u) => u.id !== urun?.id && adAnahtari(u.marka) === markaAnahtari && adAnahtari(u.model) === modelAnahtari)
+            : [];
+    const ayniMarkaModelKutusu =
+        ayniMarkaModel && kutulu
+            ? kutular.find((k) => k.id !== kutuId && adAnahtari(k.marka) === markaAnahtari && adAnahtari(k.model) === modelAnahtari)
+            : undefined;
+
+    function markaSecildi(yeni: string) {
+        // Marka değişince eski markanın modeli temizlenir.
+        if (adAnahtari(yeni) !== markaAnahtari) setValue("model", "", { shouldDirty: true });
+        setValue("marka", yeni, { shouldValidate: !!errors.marka, shouldDirty: true });
+    }
 
     // Anahtar açılınca boş site alanları stok bilgileriyle doldurulur; kullanıcı istediği gibi değiştirir.
     function siteyeEkleDegisti(acik: boolean) {
@@ -116,8 +273,9 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
         if (!urun && agac.kutulu(id)) setValue("durum", "ikinci_el");
     }
 
-    function kutuDegisti(e: React.ChangeEvent<HTMLSelectElement>) {
-        const kutu = kutular.find((k) => k.id === e.target.value);
+    function kutuSecildi(id: string) {
+        setValue("kutu_id", id, { shouldValidate: !!errors.kutu_id, shouldDirty: true });
+        const kutu = kutular.find((k) => k.id === id);
         if (!kutu) return;
         // Marka/model boşsa kutunun üstündeki bilgiyle doldurulur.
         if (!getValues("marka")) setValue("marka", kutu.marka);
@@ -139,8 +297,13 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
     const gonder = handleSubmit((veri) => {
         setSunucuHatasi(undefined);
         startTransition(async () => {
+            // Başarılı kayıtta sayfa yönlenir; taslak önceden silinir, hata olursa geri yazılır.
+            if (!urun) taslakSil();
             const sonuc = await urunKaydet(urun?.id ?? null, veri);
-            if (sonuc?.hata) setSunucuHatasi(sonuc.hata);
+            if (sonuc?.hata) {
+                setSunucuHatasi(sonuc.hata);
+                if (!urun) taslagiKaydet();
+            }
         });
     });
 
@@ -161,6 +324,15 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
 
     return (
         <form onSubmit={gonder} className="max-w-3xl space-y-6 rounded-xl border bg-white p-5 shadow-sm sm:p-6">
+            {taslak?.geriYuklendi && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                    <FileClock className="size-4 shrink-0" />
+                    <span className="min-w-0 flex-1">Kaydedilmemiş taslak geri yüklendi. Kaldığınız yerden devam edebilirsiniz.</span>
+                    <Button type="button" variant="ghost" size="sm" onClick={taslagiSil} className="text-blue-900 hover:bg-blue-100">
+                        <Trash2 /> Taslağı sil, boş başla
+                    </Button>
+                </div>
+            )}
             <fieldset className="space-y-4">
                 <legend className="mb-1 font-semibold text-[var(--color-secondary)]">Ürün</legend>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -178,20 +350,31 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
 
                     {kutulu ? (
                         <Alan etiket="Kutu" htmlFor="kutu_id" hata={errors.kutu_id?.message} zorunlu>
-                            <select id="kutu_id" className={inputSinifi} {...register("kutu_id", { onChange: kutuDegisti })}>
-                                <option value="">— Kutu seçin —</option>
-                                {kutular.map((k) => (
-                                    <option key={k.id} value={k.id}>
-                                        {kutuEtiketi(k)}
-                                    </option>
-                                ))}
-                            </select>
+                            <input type="hidden" {...register("kutu_id")} />
+                            <AramaliSecici
+                                id="kutu_id"
+                                secenekler={kutuSecenekleri}
+                                deger={kutuId}
+                                onSec={kutuSecildi}
+                                yerTutucu="— Kutu seçin —"
+                                aramaYerTutucu="Kutu no, marka veya model ara..."
+                                gecersiz={!!errors.kutu_id}
+                                altBilgi={
+                                    <button
+                                        type="button"
+                                        onClick={yeniKutuAc}
+                                        className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm font-medium text-[var(--color-secondary)] hover:bg-gray-50"
+                                    >
+                                        <PackagePlus className="size-4" /> Yeni kutu aç
+                                    </button>
+                                }
+                            />
                             <p className="text-xs text-gray-500">
                                 Stok kodu kutu numarasıyla oluşur (örn. 200-0001). Kutu yoksa{" "}
-                                <Link href="/admin/stok/kutular" className="underline">
+                                <button type="button" onClick={yeniKutuAc} className="underline">
                                     yeni kutu açın
-                                </Link>
-                                .
+                                </button>
+                                {urun ? " (yeni sekmede açılır)." : "; bilgileriniz taslak olarak saklanır, kutuyu açınca ürüne geri dönebilirsiniz."}
                             </p>
                         </Alan>
                     ) : (
@@ -208,11 +391,65 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                         />
                     </Alan>
                     <Alan etiket="Marka" htmlFor="marka" hata={errors.marka?.message}>
-                        <input id="marka" className={inputSinifi} {...register("marka")} />
+                        <input type="hidden" {...register("marka")} />
+                        <AramaliSecici
+                            id="marka"
+                            secenekler={markaSecenekleri}
+                            deger={marka}
+                            onSec={markaSecildi}
+                            yerTutucu="— Marka seçin —"
+                            aramaYerTutucu="Marka ara veya yeni marka yaz..."
+                            ekle={{ etiket: (m) => `“${m}” yeni marka olarak ekle` }}
+                            temizlenebilir
+                            gecersiz={!!errors.marka}
+                        />
                     </Alan>
                     <Alan etiket="Model" htmlFor="model" hata={errors.model?.message}>
-                        <input id="model" className={inputSinifi} {...register("model")} />
+                        <input type="hidden" {...register("model")} />
+                        <AramaliSecici
+                            id="model"
+                            secenekler={modelSecenekleri}
+                            deger={model}
+                            onSec={(m) => setValue("model", m, { shouldValidate: !!errors.model, shouldDirty: true })}
+                            yerTutucu={marka ? "— Model seçin —" : "Önce marka seçin"}
+                            aramaYerTutucu={`${marka} modeli ara veya yeni model yaz...`}
+                            ekle={{ etiket: (m) => `“${m}” modelini ${marka} markasına ekle` }}
+                            temizlenebilir
+                            pasif={!marka}
+                            gecersiz={!!errors.model}
+                        />
                     </Alan>
+                    {kayitliAyniUrunler.length > 0 && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm sm:col-span-2">
+                            <p className="mb-1.5 flex items-start gap-1.5 font-medium text-amber-800">
+                                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                <span>
+                                    {marka} {model} ile kayıtlı {kayitliAyniUrunler.length} ürün var. Aynı ürünse yeni kayıt açmak yerine
+                                    ürün sayfasından stok girişi yapın:
+                                </span>
+                            </p>
+                            <ul className="space-y-0.5 pl-6">
+                                {kayitliAyniUrunler.slice(0, 5).map((u) => (
+                                    <li key={u.id}>
+                                        <Link href={`/admin/stok/${u.id}`} target="_blank" className="hover:underline">
+                                            <span className="font-mono font-semibold">{u.stok_kodu}</span> · {u.ad}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {ayniMarkaModelKutusu && (
+                        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 sm:col-span-2">
+                            <AlertTriangle className="size-4 shrink-0" />
+                            <span className="min-w-0 flex-1">
+                                {marka} {model} için zaten kutu var: <strong>{kutuEtiketi(ayniMarkaModelKutusu)}</strong>.
+                            </span>
+                            <Button type="button" size="sm" variant="outline" onClick={() => kutuSecildi(ayniMarkaModelKutusu.id)}>
+                                Bu kutuyu seç
+                            </Button>
+                        </div>
+                    )}
                     <Alan etiket="Durum" htmlFor="durum_sifir" hata={errors.durum?.message} zorunlu>
                         <div className="flex gap-4 pt-1.5">
                             {Object.entries(URUN_DURUMLARI).map(([deger, { etiket }]) => (
@@ -233,6 +470,21 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
                                 </option>
                             ))}
                         </select>
+                    </Alan>
+                    <Alan etiket="Stok Kodu" htmlFor="stok_kodu" hata={errors.stok_kodu?.message}>
+                        <input
+                            id="stok_kodu"
+                            autoComplete="off"
+                            placeholder={kutulu ? "Boş: otomatik (örn. 200-0001)" : "Boş: otomatik (örn. 000123)"}
+                            aria-invalid={!!errors.stok_kodu}
+                            className={cn(inputSinifi, "font-mono uppercase placeholder:font-sans placeholder:normal-case")}
+                            {...register("stok_kodu")}
+                        />
+                        <p className="text-xs text-gray-500">
+                            {urun
+                                ? "Değiştirirseniz yeni kod kullanılır; başka üründe kayıtlı kod verilemez."
+                                : "Kendi kodunuzu yazabilir veya boş bırakıp otomatik verdirebilirsiniz."}
+                        </p>
                     </Alan>
                     <Alan etiket="Seri No" htmlFor="seri_no" hata={errors.seri_no?.message}>
                         <input id="seri_no" autoComplete="off" className={inputSinifi} {...register("seri_no")} />
@@ -417,14 +669,27 @@ export default function UrunFormu({ kategoriler, kutular, tedarikciler, urun, ba
 
             <FormHatasi mesaj={sunucuHatasi} />
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
                 <Button type="submit" disabled={bekliyor} className={anaButonSinifi}>
                     {bekliyor ? <Loader2 className="animate-spin" /> : <Save />}
-                    {urun ? "Kaydet" : "Ürünü Ekle"}
+                    {urun ? "Kaydet" : "Stoğa Ekle"}
                 </Button>
+                {!urun && (
+                    <Button type="button" variant="outline" onClick={taslagiKaydet} disabled={bekliyor}>
+                        <FileClock /> Taslak Olarak Kaydet
+                    </Button>
+                )}
                 <Button type="button" variant="outline" asChild>
                     <Link href={iptalLinki}>Vazgeç</Link>
                 </Button>
+                {!urun && taslak && (
+                    <span className="text-xs text-gray-500">
+                        Taslak {saatYaz(taslak.zaman)} itibarıyla bu tarayıcıda kayıtlı ·{" "}
+                        <button type="button" onClick={taslagiSil} className="underline hover:text-[var(--color-primary)]">
+                            sil
+                        </button>
+                    </span>
+                )}
             </div>
         </form>
     );

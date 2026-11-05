@@ -1,14 +1,18 @@
 // src/app/admin/_components/OtomatikFiltreFormu.tsx
-// GET ile çalışan filtre formu. Açılır liste veya tarih değişince formu kendiliğinden gönderir;
+// Panel liste sayfalarının filtre formu. Açılır liste veya tarih değişince formu kendiliğinden gönderir;
 // metin aramasında her tuşta değil, Enter/"Ara" ile gönderilir.
+// Form sunucuya gönderilir (panelFiltreUygula): filtreler adrese, arama kelimesi (name="q") adres yerine çereze yazılır.
 "use client";
 
-type Props = React.ComponentProps<"form"> & { action: string };
+import { panelFiltreUygula } from "@/actions/panel-arama";
 
-export default function OtomatikFiltreFormu({ children, ...props }: Props) {
+type Props = Omit<React.ComponentProps<"form">, "action"> & { action: string }; // action: listenin yolu (örn. /admin/stok)
+
+export default function OtomatikFiltreFormu({ children, action, ...props }: Props) {
     return (
         <form
             {...props}
+            action={panelFiltreUygula}
             onChange={(e) => {
                 const hedef = e.target as HTMLElement;
                 if (hedef instanceof HTMLSelectElement || (hedef instanceof HTMLInputElement && hedef.type === "date")) {
@@ -16,6 +20,7 @@ export default function OtomatikFiltreFormu({ children, ...props }: Props) {
                 }
             }}
         >
+            <input type="hidden" name="_yol" value={action} />
             {children}
         </form>
     );

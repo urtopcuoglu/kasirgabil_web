@@ -5,6 +5,7 @@ import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
 import { CalendarClock, CalendarPlus, Eye, Laptop, Phone, Plus, Printer, Search, UserCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { DURUM_KODLARI, kalemToplamlari, SERVIS_DURUMLARI, type ServisKaydi } from "@/lib/schemas/servis";
 import type { Personel } from "@/lib/schemas/personel";
 import { bugunISO, gunBasi, paraYaz, sonrakiGunBasi, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
@@ -27,6 +28,7 @@ import {
     uuidMi,
 } from "../../_components/liste";
 import OtomatikFiltreFormu from "../../_components/OtomatikFiltreFormu";
+import ServisAraclari from "./ServisAraclari";
 import DurumRozeti from "./DurumRozeti";
 
 export const metadata: Metadata = {
@@ -35,7 +37,6 @@ export const metadata: Metadata = {
 
 type Props = {
     searchParams: Promise<{
-        q?: string;
         sayfa?: string;
         durum?: string;
         personel?: string;
@@ -71,7 +72,7 @@ function gecikmisMi(k: ServisKaydi, bugun: string) {
 export default async function TeknikServisSayfasi({ searchParams }: Props) {
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/teknik-servis"); // adreste değil çerezde (src/lib/panel-arama.ts)
     const durum = secenekOku(p.durum, DURUM_FILTRELERI, "");
     const personel = uuidMi(p.personel) ? p.personel : undefined;
     const baslangic = tarihMi(p.baslangic) ? p.baslangic : undefined;
@@ -128,6 +129,8 @@ export default async function TeknikServisSayfasi({ searchParams }: Props) {
                 </Button>
 )}
             </SayfaBasligi>
+
+            <ServisAraclari />
 
             <OtomatikFiltreFormu
                 action="/admin/teknik-servis"

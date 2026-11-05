@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck, CalendarPlus, Eye, Plus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { ODEME_TIPLERI, type Kargo, type KargoGonderici } from "@/lib/schemas/kargo";
 import { gunBasi, sonrakiGunBasi, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
@@ -32,7 +33,6 @@ export const metadata: Metadata = {
 
 type Props = {
     searchParams: Promise<{
-        q?: string;
         sayfa?: string;
         gonderici?: string;
         odeme?: string;
@@ -60,7 +60,7 @@ function orIlikeDegeri(q: string) {
 export default async function KargolarSayfasi({ searchParams }: Props) {
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/kargolar"); // adreste değil çerezde (src/lib/panel-arama.ts)
     // Elle bozulmuş bir URL veritabanı hatasına yol açmasın diye değerler doğrulanarak okunur.
     const gonderici = uuidMi(p.gonderici) ? p.gonderici : undefined;
     const odeme = secenekOku(p.odeme, ODEME_SECENEKLERI, "");

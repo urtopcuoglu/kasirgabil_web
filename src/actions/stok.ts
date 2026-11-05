@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import {
     kategoriSemasi,
     kutuSemasi,
+    markaAdiSemasi,
+    modelAdiSemasi,
     stokHareketiSemasi,
     urunSemasi,
     type HareketTipi,
@@ -16,7 +18,7 @@ import {
 import { slugUret } from "@/lib/schemas/icerik";
 import { sayiOku } from "@/lib/schemas/ortak";
 import { depoYolu, vitrinUrunleriniYenile } from "@/lib/site-urunleri";
-import { bosIseNull, dbHataMesaji, izinliIstemci } from "@/lib/supabase/yetkili";
+import { bosIseNull, dbHataMesaji, izinliIstemci, OTURUM_HATASI, yetkiliIstemci } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -109,7 +111,8 @@ const KUTU_TEKILLIK = {
 };
 
 // id null ise yeni kutu (kaydedince kutu sayfasına gider), değilse güncelleme.
-export async function kutuKaydet(id: string | null, girdi: KutuGirdisi): Promise<IslemSonucu> {
+// urundenGelindi: ürün formundan "yeni kutu aç" ile gelindiyse kutu sayfasında "Ürüne geri dön" butonu çıkar.
+export async function kutuKaydet(id: string | null, girdi: KutuGirdisi, urundenGelindi = false): Promise<IslemSonucu> {
     const sonuc = kutuSemasi.safeParse(girdi);
     if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz veri." };
 
@@ -130,7 +133,7 @@ export async function kutuKaydet(id: string | null, girdi: KutuGirdisi): Promise
     if (error) return { hata: tekillikMesaji(error, KUTU_TEKILLIK) };
 
     revalidatePath(KUTULAR);
-    redirect(`${KUTULAR}/${data.id}`);
+    redirect(`${KUTULAR}/${data.id}${urundenGelindi ? "?donus=urun" : ""}`);
 }
 
 export async function kutuSil(id: string): Promise<IslemSonucu> {
@@ -148,6 +151,7 @@ export async function kutuSil(id: string): Promise<IslemSonucu> {
 // ─── Ürünler ────────────────────────────────────────────────
 
 const URUN_TEKILLIK = {
+    urunler_stok_kodu_key: "Bu stok kodu başka bir üründe kayıtlı.",
     urunler_seri_tekil: "Bu seri numarası başka bir üründe kayıtlı.",
     urunler_barkod_tekil: "Bu barkod / GTIN başka bir üründe kayıtlı.",
 };
@@ -190,6 +194,8 @@ export async function urunKaydet(id: string | null, girdi: UrunGirdisi): Promise
         min_stok: sayiOku(d.min_stok),
         sitede: d.sitede,
         site_gorseller: d.site_gorseller,
+        // Elle girilen stok kodu; boşsa gönderilmez (yeni kayıtta otomatik üretilir, düzenlemede eskisi kalır).
+        ...(d.stok_kodu ? { stok_kodu: d.stok_kodu.toUpperCase() } : {}),
         // "lenovo-ideapad-slim-3-1a2b3c4d": addaki kimlik parçası, aynı adlı ürünlerin çakışmasını önler.
         site_slug: d.site_ad ? `${slugUret(d.site_ad) || "urun"}-${hedefId.slice(0, 8)}` : null,
     };
@@ -291,4 +297,113 @@ export async function stokHareketiEkle(
 
     revalidatePath(STOK, "layout");
     vitrinUrunleriniYenile();
+}
+
+// ─── Teknik servis aracı: stokta parça arama ────────────────
+
+export type StoktakiParca = { id: string; stok_kodu: string; ad: string; stok_adedi: number; kutu_no: number | null };
+
+// LCD kodu, parça no vb. ile stokta arama (ad, marka, model, seri no, barkod, stok kodu).
+// Koddaki tire/boşluk gibi ayraçlar joker sayılır: "N156HRA-EA1" araması "N156HRA EA1" yazılmış ürünü de bulur.
+export async function stoktaParcaAra(kod: string): Promise<{ sonuclar: StoktakiParca[] } | { hata: string }> {
+    const supabase = await yetkiliIstemci();
+    if (!supabase) return { hata: OTURUM_HATASI };
+    const temiz = String(kod ?? "").trim().slice(0, 60);
+    if (temiz.length < 3) return { sonuclar: [] };
+
+    // Yalnızca harf/rakam parçaları alınır, araları joker olur: "N156HRA-EA1" → "%N156HRA%EA1%".
+    const parcalar = temiz.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    if (parcalar.length === 0) return { sonuclar: [] };
+    const desen = `%${parcalar.join("%")}%`;
+
+    const { data, error } = await supabase
+        .from("urunler")
+        .select("id, stok_kodu, ad, stok_adedi, kutular(kutu_no)")
+        .ilike("arama", desen)
+        .order("stok_adedi", { ascending: false })
+        .limit(20);
+    if (error) return { hata: dbHataMesaji(error) };
+
+    type Satir = Omit<StoktakiParca, "kutu_no"> & { kutular: { kutu_no: number } | null };
+    return {
+        sonuclar: ((data ?? []) as unknown as Satir[]).map(({ kutular, ...u }) => ({ ...u, kutu_no: kutular?.kutu_no ?? null })),
+    };
+}
+
+// ─── Markalar ve modeller ───────────────────────────────────
+
+const MARKALAR = `${STOK}/markalar`;
+
+const MARKA_TEKILLIK = {
+    urun_markalari_anahtar_key: "Bu marka zaten kayıtlı.",
+    urun_modelleri_marka_id_anahtar_key: "Bu model bu markada zaten kayıtlı.",
+    // Birleştirme sonucu iki kutu aynı marka/modele düşüyorsa
+    kutular_marka_model_tekil: "Bu birleştirme aynı marka/model için iki kutu oluşturuyor. Önce kutulardan birinin parçalarını diğerine taşıyın.",
+};
+
+function markaSonrasiYenile() {
+    revalidatePath(STOK, "layout");
+    vitrinUrunleriniYenile(); // sitedeki marka/model filtreleri
+}
+
+export async function markaEkle(ad: string): Promise<IslemSonucu> {
+    const sonuc = markaAdiSemasi.safeParse(ad);
+    if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz ad." };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+
+    const { error } = await yetki.supabase.from("urun_markalari").insert({ ad: sonuc.data.replace(/\s+/g, " ") });
+    if (error) return { hata: tekillikMesaji(error, MARKA_TEKILLIK) };
+    revalidatePath(MARKALAR);
+}
+
+export async function modelEkle(markaId: string, ad: string): Promise<IslemSonucu> {
+    const sonuc = modelAdiSemasi.safeParse(ad);
+    if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz ad." };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+
+    const { error } = await yetki.supabase.from("urun_modelleri").insert({ marka_id: markaId, ad: sonuc.data.replace(/\s+/g, " ") });
+    if (error) return { hata: tekillikMesaji(error, MARKA_TEKILLIK) };
+    revalidatePath(MARKALAR);
+}
+
+// Yeniden adlandırma ürün ve kutulardaki metni de günceller; aynı ad başka kayda denk gelirse ikisi birleşir.
+export async function markaYenidenAdlandir(id: string, ad: string): Promise<IslemSonucu> {
+    const sonuc = markaAdiSemasi.safeParse(ad);
+    if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz ad." };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+
+    const { error } = await yetki.supabase.rpc("marka_yeniden_adlandir", { p_id: id, p_ad: sonuc.data });
+    if (error) return { hata: tekillikMesaji(error, MARKA_TEKILLIK) };
+    markaSonrasiYenile();
+}
+
+export async function modelYenidenAdlandir(id: string, ad: string): Promise<IslemSonucu> {
+    const sonuc = modelAdiSemasi.safeParse(ad);
+    if (!sonuc.success) return { hata: sonuc.error.issues[0]?.message ?? "Geçersiz ad." };
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+
+    const { error } = await yetki.supabase.rpc("model_yeniden_adlandir", { p_id: id, p_ad: sonuc.data });
+    if (error) return { hata: tekillikMesaji(error, MARKA_TEKILLIK) };
+    markaSonrasiYenile();
+}
+
+// Yalnızca hiçbir ürün veya kutuda kullanılmayan kayıt silinir (veritabanı fonksiyonu denetler).
+export async function markaSil(id: string): Promise<IslemSonucu> {
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { error } = await yetki.supabase.rpc("marka_sil", { p_id: id });
+    if (error) return { hata: dbHataMesaji(error) };
+    revalidatePath(MARKALAR);
+}
+
+export async function modelSil(id: string): Promise<IslemSonucu> {
+    const yetki = await izinliIstemci("stok_yonet");
+    if ("hata" in yetki) return yetki;
+    const { error } = await yetki.supabase.rpc("model_sil", { p_id: id });
+    if (error) return { hata: dbHataMesaji(error) };
+    revalidatePath(MARKALAR);
 }

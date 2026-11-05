@@ -1,12 +1,13 @@
 // src/app/admin/(panel)/stok/disa-aktar/route.ts
 // Stok listesini liste sayfasındaki filtre ve sıralamayla (sayfalamasız) PDF, Excel veya CSV olarak indirir.
-// /admin/stok/disa-aktar?bicim=pdf|xlsx|csv&q=...&kategori=...
+// /admin/stok/disa-aktar?bicim=pdf|xlsx|csv&kategori=... (arama kelimesi çerezden: src/lib/panel-arama.ts)
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import ExcelJS from "exceljs";
 import fontkit from "@pdf-lib/fontkit";
 import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { oturum } from "@/lib/supabase/yetkili";
 import { kategoriAgaci, URUN_DURUMLARI, type Kutu, type Urun, type UrunKategori } from "@/lib/schemas/stok";
 import { secenekOku } from "../../../_components/liste";
@@ -28,7 +29,8 @@ export async function GET(istek: Request) {
 
     const parametreler = Object.fromEntries(new URL(istek.url).searchParams);
     const bicim = secenekOku(parametreler.bicim, BICIMLER, "csv");
-    const f = stokFiltreleriOku(parametreler);
+    // Arama kelimesi liste sayfasındaki gibi çerezden okunur; diğer filtreler adresten gelir.
+    const f = stokFiltreleriOku({ ...parametreler, q: await panelAramasiOku("/admin/stok") });
 
     const supabase = await createClient();
     const { data: kategoriData } = await supabase.from("urun_kategorileri").select("id, ad, ust_id, kutu_sistemi");

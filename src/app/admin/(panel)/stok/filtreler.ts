@@ -64,3 +64,15 @@ export function stokSorgusu(
     if (f.site) sorgu = sorgu.eq("sitede", f.site === "evet");
     return sorgu;
 }
+
+// Barkod okuyucu / elle tam kod: stok kodu, barkod veya seri no tek ürüne denk geliyorsa o ürünün kimliği.
+// Yalnızca harf/rakam/nokta/tire içeren aramalarda denenir (PostgREST filtre sözdizimi bozulmasın).
+export async function stokTamEslesmesi(supabase: SupabaseClient, q: string): Promise<string | null> {
+    if (!/^[\p{L}\d.-]+$/u.test(q)) return null;
+    const { data } = await supabase
+        .from("urunler")
+        .select("id")
+        .or(`stok_kodu.eq.${q},barkod.eq.${q},seri_no.ilike.${q}`)
+        .limit(2);
+    return data?.length === 1 ? (data[0].id as string) : null;
+}

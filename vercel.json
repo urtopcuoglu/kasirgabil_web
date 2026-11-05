@@ -1,0 +1,9 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "crons": [
+        {
+            "path": "/api/cron/donanim-puanlari",
+            "schedule": "0 3 * * 1"
+        }
+    ]
+}

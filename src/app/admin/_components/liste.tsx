@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, LayoutGrid, List, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { panelFiltreUygula } from "@/actions/panel-arama";
 import { inputSinifi } from "./form";
 
 export type Gorunum = "liste" | "kart";
 
 export const gorunumOku = (deger?: string): Gorunum => (deger === "kart" ? "kart" : "liste");
 
-// Boş değerleri atlayarak sorgu parametreli link üretir.
+// Boş değerleri atlayarak sorgu parametreli link üretir. Arama kelimesi (q) bilerek eklenmez: adreste değil
+// çerezde taşınır (src/lib/panel-arama.ts); filtre nesnelerinde q bulunsa da linke sızmaz.
 export function linkOlustur(yol: string, parametreler: Record<string, string | undefined>) {
     const params = new URLSearchParams();
     for (const [anahtar, deger] of Object.entries(parametreler)) {
-        if (deger) params.set(anahtar, deger);
+        if (deger && anahtar !== "q") params.set(anahtar, deger);
     }
     const s = params.toString();
     return s ? `${yol}?${s}` : yol;
@@ -98,15 +100,19 @@ export function FiltreTarihi({ etiket, name, deger }: { etiket: string; name: st
     );
 }
 
-// Aktif filtre varsa sonuç sayısı ve "Filtreleri temizle" linki gösterir.
+// Aktif filtre varsa sonuç sayısı ve "Filtreleri temizle" gösterir. Temizleme, çerezdeki arama kelimesini de
+// sildiği için link değil form gönderimidir (temizleLinki'ne yönlenir).
 export function FiltreOzeti({ sonucSayisi, aktifFiltre, temizleLinki }: { sonucSayisi: number; aktifFiltre: number; temizleLinki: string }) {
     return (
         <div className="mb-4 flex min-h-5 items-center gap-3 text-xs text-gray-500">
             <span>{sonucSayisi} kayıt</span>
             {aktifFiltre > 0 && (
-                <Link href={temizleLinki} className="flex items-center gap-1 text-[var(--color-primary)] hover:underline">
-                    <X className="size-3" /> Filtreleri temizle ({aktifFiltre})
-                </Link>
+                <form action={panelFiltreUygula}>
+                    <input type="hidden" name="_yol" value={temizleLinki} />
+                    <button type="submit" className="flex items-center gap-1 text-[var(--color-primary)] hover:underline">
+                        <X className="size-3" /> Filtreleri temizle ({aktifFiltre})
+                    </button>
+                </form>
             )}
         </div>
     );

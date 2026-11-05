@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Building2, Mail, MapPin, Pencil, Phone, Plus, Search, Tags, Truck } from "lucide-react";
 import { rehberKisiSil } from "@/actions/rehber";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { TEDARIKCI_KODU, type RehberKategori, type RehberKisi } from "@/lib/schemas/rehber";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ q?: string; sayfa?: string; kategori?: string; adres?: string; sirala?: string; gorunum?: string }>;
+    searchParams: Promise<{ sayfa?: string; kategori?: string; adres?: string; sirala?: string; gorunum?: string }>;
 };
 
 type KisiSatiri = RehberKisi & { rehber_kategorileri: Pick<RehberKategori, "ad" | "kod"> | null };
@@ -50,7 +51,7 @@ type Siralama = keyof typeof SIRALAMALAR;
 export default async function RehberSayfasi({ searchParams }: Props) {
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/rehber"); // adreste değil çerezde (src/lib/panel-arama.ts)
     // Elle bozulmuş bir URL veritabanı hatasına yol açmasın diye değerler doğrulanarak okunur.
     const kategori = uuidMi(p.kategori) ? p.kategori : undefined;
     const adres = secenekOku(p.adres, ADRES_SECENEKLERI, "");

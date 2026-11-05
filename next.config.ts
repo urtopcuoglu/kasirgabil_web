@@ -21,6 +21,24 @@ const nextConfig: NextConfig = {
             },
         ],
     },
+    async headers() {
+        return [
+            // Başka sitelere giden isteklerde yalnızca alan adı gönderilir; yol ve sorgu (?ara=, ?q=) sızmaz.
+            {
+                source: '/:path*',
+                headers: [{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }],
+            },
+            // Panel (/admin dahil): dış sitelere hiç referrer gönderilmez, arama motorları dizine eklemez.
+            // Aynı başlığı ayarlayan sonraki kural öncekini ezer.
+            {
+                source: '/admin/:path*',
+                headers: [
+                    { key: 'Referrer-Policy', value: 'same-origin' },
+                    { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+                ],
+            },
+        ];
+    },
     async redirects() {
         return [
             // Eski WooCommerce ürün sayfaları → anasayfa

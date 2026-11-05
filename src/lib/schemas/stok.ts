@@ -103,6 +103,16 @@ export const kutuAnahtari = (marka: string, model: string) =>
 
 export const kutuEtiketi = (k: Pick<Kutu, "kutu_no" | "marka" | "model">) => `${k.kutu_no} · ${k.marka} ${k.model}`;
 
+// ─── Markalar ve modeller ───────────────────────────────────
+// Ürün formundaki marka/model listelerinin kaynağı (migration 20261105140000_marka_model.sql).
+// Ürün veya kutuya yeni bir marka/model yazılınca veritabanı tetikleyicisi buraya ekler.
+
+export type UrunMarkasi = { id: string; ad: string };
+export type UrunModeli = { id: string; marka_id: string; ad: string };
+
+export const markaAdiSemasi = z.string().trim().min(1, { error: "Marka adı girin." }).max(60, { error: "En fazla 60 karakter girilebilir." });
+export const modelAdiSemasi = z.string().trim().min(1, { error: "Model adı girin." }).max(100, { error: "En fazla 100 karakter girilebilir." });
+
 // ─── Ürünler ────────────────────────────────────────────────
 
 // Web sitesi görselleri: ürün başına en fazla 6, her biri en fazla 2 MB. İlk görsel kapak olur.
@@ -117,6 +127,12 @@ export const urunSemasi = z
     .object({
         kategori_id: z.uuid({ error: "Kategori seçin." }),
         kutu_id: opsiyonelId,
+        // Boşsa veritabanı otomatik üretir (kutulu parçada 200-0001, diğerlerinde 000001). Kayıtta büyük harfe çevrilir.
+        stok_kodu: z
+            .string()
+            .trim()
+            .max(30, { error: "En fazla 30 karakter girilebilir." })
+            .regex(/^[A-Za-z0-9._/-]*$/, { error: "Yalnızca harf (Türkçe karakter hariç), rakam ve - . / _ kullanılabilir." }),
         ad: z.string().trim().min(2, { error: "Ürün adı girin." }).max(150, { error: "En fazla 150 karakter girilebilir." }),
         marka: opsiyonelMetin(60),
         model: opsiyonelMetin(100),

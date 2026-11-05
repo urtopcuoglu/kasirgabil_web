@@ -19,7 +19,7 @@ export default async function YeniUrunSayfasi({ searchParams }: { searchParams: 
 
     return (
         <div>
-            <SayfaBasligi baslik="Yeni Ürün" aciklama="Stok kodu kayıt sırasında otomatik verilir." />
+            <SayfaBasligi baslik="Yeni Ürün" aciklama="Stok kodunu kendiniz yazabilir veya boş bırakıp otomatik verdirebilirsiniz. Form yazdıkça taslak olarak saklanır." />
             <UrunFormu {...veri} baslangicKutuId={uuidMi(kutu) ? kutu : undefined} />
         </div>
     );

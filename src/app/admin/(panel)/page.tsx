@@ -1,5 +1,5 @@
 // src/app/admin/(panel)/page.tsx
-// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar, kritik stok ve stok metrikleri.
+// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar, kritik stok, satış ve kasa analizi (dönem seçmeli) ve stok metrikleri.
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Boxes, Cpu, Laptop, MemoryStick, Monitor, Package, PackagePlus, Phone, Plus, ShieldAlert, Tag, Trophy, Wallet, Wrench } from "lucide-react";
@@ -14,8 +14,11 @@ import { bugunISO, paraYaz, tarihYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi } from "../_components/form";
-import { linkOlustur } from "../_components/liste";
+import { linkOlustur, secenekOku } from "../_components/liste";
+import { panelFiltreUygula } from "@/actions/panel-arama";
 import DurumRozeti from "./teknik-servis/DurumRozeti";
+import { DONEM_LISTESI, kasaAnalizi, type Donem } from "@/lib/kasa-analiz";
+import SatisAnalizi from "./SatisAnalizi";
 
 export const metadata: Metadata = {
     title: "Özet",
@@ -23,15 +26,16 @@ export const metadata: Metadata = {
 
 type AcikServis = Pick<ServisKaydi, "id" | "form_no" | "musteri_ad_soyad" | "musteri_telefon" | "cihaz_marka_model" | "durum" | "tahmini_teslim_tarihi">;
 
-export default async function AdminOzetSayfasi({ searchParams }: { searchParams: Promise<{ yetkisiz?: string }> }) {
-    const { yetkisiz } = await searchParams;
+export default async function AdminOzetSayfasi({ searchParams }: { searchParams: Promise<{ yetkisiz?: string; donem?: string }> }) {
+    const { yetkisiz, donem: donemParametresi } = await searchParams;
+    const donem = secenekOku<Donem>(donemParametresi, DONEM_LISTESI, "ay");
     const o = await oturum();
     const rol = o?.rol;
     const kasaGorur = izinVar(rol, "kasa");
     const bugun = bugunISO();
     const supabase = await createClient();
 
-    const [servisSonucu, kritikSonucu, kasa, stok] = await Promise.all([
+    const [servisSonucu, kritikSonucu, kasa, stok, analiz] = await Promise.all([
         supabase
             .from("teknik_servis_kayitlari")
             .select("id, form_no, musteri_ad_soyad, musteri_telefon, cihaz_marka_model, durum, tahmini_teslim_tarihi")
@@ -46,6 +50,8 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
             .limit(8),
         kasaGorur ? kasaVerisi(supabase, bugun) : Promise.resolve(null),
         stokOzeti(supabase),
+        // Satış ve kasa analizi yalnızca kasa izni olanlara; okunamazsa bölüm hata mesajıyla gösterilir.
+        kasaGorur ? kasaAnalizi(supabase, donem).catch((e: unknown) => (e instanceof Error ? e : new Error(String(e)))) : Promise.resolve(null),
     ]);
 
     const acikServisler = (servisSonucu.data ?? []) as AcikServis[];
@@ -177,6 +183,14 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
                 </Kart>
             </div>
 
+            {analiz instanceof Error ? (
+                <p role="alert" className="rounded-md bg-red-50 px-4 py-3 text-sm text-[var(--color-primary)]">
+                    Satış ve kasa analizi yüklenemedi. Sayfayı yenileyin.
+                </p>
+            ) : (
+                analiz && <SatisAnalizi a={analiz} />
+            )}
+
             {/* Stok metrikleri */}
             <section>
                 <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
@@ -205,7 +219,8 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
                         Ikon={Tag}
                         deger={stok.enCokMarka?.ad ?? "—"}
                         alt={stok.enCokMarka ? `${sayiYaz(stok.enCokMarka.adet)} adet · ${sayiYaz(stok.enCokMarka.cesit)} çeşit` : "Markası girilmiş ürün yok"}
-                        href={stok.enCokMarka ? linkOlustur("/admin/stok", { q: stok.enCokMarka.ad, stok: "var" }) : undefined}
+                        href={stok.enCokMarka ? linkOlustur("/admin/stok", { stok: "var" }) : undefined}
+                        arama={stok.enCokMarka?.ad}
                     />
                     <Metrik
                         baslik="Notebook İşlemci Markası"
@@ -218,13 +233,10 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
                         }
                         href={
                             stok.dallar.notebookIslemci.kategoriId
-                                ? linkOlustur("/admin/stok", {
-                                      kategori: stok.dallar.notebookIslemci.kategoriId,
-                                      q: stok.notebookIslemciMarkasi?.ad,
-                                      stok: "var",
-                                  })
+                                ? linkOlustur("/admin/stok", { kategori: stok.dallar.notebookIslemci.kategoriId, stok: "var" })
                                 : undefined
                         }
+                        arama={stok.notebookIslemciMarkasi?.ad}
                     />
                     <ModelMetrigi baslik="Notebook Modelleri" Ikon={Laptop} dal={stok.dallar.notebookModel} />
                     <ModelMetrigi baslik="PC Modelleri" Ikon={Monitor} dal={stok.dallar.pcModel} />
@@ -311,7 +323,22 @@ const sayiYaz = (n: number) => n.toLocaleString("tr-TR");
 
 const dalLinki = (dal: DalOzeti) => (dal.kategoriId ? linkOlustur("/admin/stok", { kategori: dal.kategoriId, stok: "var" }) : undefined);
 
-function Metrik({ baslik, Ikon, deger, alt, href }: { baslik: string; Ikon: IkonTipi; deger: string; alt: string; href?: string }) {
+// arama verilirse kart, stok listesine bu arama kelimesiyle gider; kelime adrese değil çereze yazılır (panelFiltreUygula).
+function Metrik({
+    baslik,
+    Ikon,
+    deger,
+    alt,
+    href,
+    arama,
+}: {
+    baslik: string;
+    Ikon: IkonTipi;
+    deger: string;
+    alt: string;
+    href?: string;
+    arama?: string;
+}) {
     const icerik = (
         <>
             <div className="flex items-center justify-between gap-2">
@@ -325,6 +352,17 @@ function Metrik({ baslik, Ikon, deger, alt, href }: { baslik: string; Ikon: Ikon
         </>
     );
     const sinif = "block rounded-xl border bg-white p-5 shadow-sm";
+    if (href && arama) {
+        return (
+            <form action={panelFiltreUygula}>
+                <input type="hidden" name="_yol" value={href} />
+                <input type="hidden" name="q" value={arama} />
+                <button type="submit" className={cn(sinif, "w-full text-left transition-colors hover:border-[var(--color-secondary)]")}>
+                    {icerik}
+                </button>
+            </form>
+        );
+    }
     return href ? (
         <Link href={href} className={cn(sinif, "transition-colors hover:border-[var(--color-secondary)]")}>
             {icerik}

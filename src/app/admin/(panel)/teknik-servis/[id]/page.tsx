@@ -15,6 +15,7 @@ import { paraYaz, tarihSaatYaz, tarihYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { anaButonSinifi, SayfaBasligi } from "../../../_components/form";
+import ServisAraclari from "../ServisAraclari";
 import SilButonu from "../../../_components/SilButonu";
 import DurumRozeti from "../DurumRozeti";
 import DurumPaneli from "./DurumPaneli";
@@ -80,6 +81,8 @@ export default async function ServisDetaySayfasi({ params }: { params: Promise<{
                 />
 )}
             </SayfaBasligi>
+
+            <ServisAraclari />
 
             <div className="grid gap-4 lg:grid-cols-3">
                 {/* Sol: kayıt bilgileri */}

@@ -8,6 +8,8 @@ import { sohbetSil } from "@/actions/sohbet";
 import { izinVar } from "@/lib/izinler";
 import type { Sohbet, SohbetMesaji } from "@/lib/schemas/sohbet";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
+import { panelFiltreUygula } from "@/actions/panel-arama";
 import { dbHataMesaji, izinGerekli } from "@/lib/supabase/yetkili";
 import { saatYaz, tarihSaatYaz } from "@/lib/tarih";
 import { cn } from "@/lib/utils";
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-    searchParams: Promise<{ id?: string; durum?: string; q?: string }>;
+    searchParams: Promise<{ id?: string; durum?: string }>;
 };
 
 const DURUMLAR = ["acik", "kapali", "tumu"] as const;
@@ -36,7 +38,7 @@ export default async function SohbetlerSayfasi({ searchParams }: Props) {
 
     const p = await searchParams;
     const durum = secenekOku(p.durum, DURUMLAR, "acik");
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/sohbetler"); // adreste değil çerezde (src/lib/panel-arama.ts)
     const seciliId = uuidMi(p.id) ? p.id! : null;
     const filtreler = { durum: durum === "acik" ? undefined : durum, q: q || undefined };
     const link = (ek: Record<string, string | undefined>) => linkOlustur("/admin/sohbetler", { ...filtreler, ...ek });
@@ -107,7 +109,8 @@ export default async function SohbetlerSayfasi({ searchParams }: Props) {
                                 </Link>
                             ))}
                         </nav>
-                        <form action="/admin/sohbetler" className="relative">
+                        <form action={panelFiltreUygula} className="relative">
+                            <input type="hidden" name="_yol" value="/admin/sohbetler" />
                             {filtreler.durum && <input type="hidden" name="durum" value={filtreler.durum} />}
                             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
                             <input name="q" type="search" defaultValue={q} placeholder="İsim, telefon, e-posta..." className={cn(inputSinifi, "py-1.5 pl-9")} />

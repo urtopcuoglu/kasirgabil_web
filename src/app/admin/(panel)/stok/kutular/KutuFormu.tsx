@@ -17,9 +17,10 @@ type Props = {
     kutular: KutuOzeti[]; // mükerrer kontrolü ve sıradaki numara için
     kutu?: Kutu; // verilmezse yeni kutu
     bitti?: () => void;
+    urundenGelindi?: boolean; // ürün formundan "yeni kutu aç" ile gelindiyse kayıttan sonra geri dönüş butonu gösterilir
 };
 
-export default function KutuFormu({ kutular, kutu, bitti }: Props) {
+export default function KutuFormu({ kutular, kutu, bitti, urundenGelindi }: Props) {
     const [sunucuHatasi, setSunucuHatasi] = useState<string>();
     const [bekliyor, startTransition] = useTransition();
     const siradakiNo = kutular.reduce((max, k) => Math.max(max, k.kutu_no), 0) + 1;
@@ -52,7 +53,7 @@ export default function KutuFormu({ kutular, kutu, bitti }: Props) {
     const gonder = handleSubmit((veri) => {
         setSunucuHatasi(undefined);
         startTransition(async () => {
-            const sonuc = await kutuKaydet(kutu?.id ?? null, veri);
+            const sonuc = await kutuKaydet(kutu?.id ?? null, veri, urundenGelindi);
             if (sonuc?.hata) setSunucuHatasi(sonuc.hata);
             else bitti?.();
         });
@@ -96,7 +97,7 @@ export default function KutuFormu({ kutular, kutu, bitti }: Props) {
                     <ul className="space-y-1">
                         {benzerler.map((k) => (
                             <li key={k.id}>
-                                <Link href={`/admin/stok/kutular/${k.id}`} className="inline-flex items-center gap-1.5 hover:underline">
+                                <Link href={`/admin/stok/kutular/${k.id}${urundenGelindi ? "?donus=urun" : ""}`} className="inline-flex items-center gap-1.5 hover:underline">
                                     <PackageOpen className="size-3.5" /> {kutuEtiketi(k)}
                                 </Link>
                             </li>

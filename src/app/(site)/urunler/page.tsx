@@ -1,11 +1,12 @@
 // src/app/(site)/urunler/page.tsx
 // Panelde "Siteye ekle" ile yayınlanan ürünler. Fiyat gösterilmez; kartlarda WhatsApp ve canlı destek butonları var.
 import type { Metadata } from "next";
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { ChevronLeft, ChevronRight, PackageSearch, ShoppingBag } from "lucide-react";
 import { siteIcerigi } from "@/lib/icerik";
-import { SITE_SIRALAMALARI, siteFiltreSecenekleri, siteUrunleri, type SiteSiralamasi } from "@/lib/site-urunleri";
-import UrunFiltreleri from "@/app/component_page/UrunFiltreleri";
+import { SITE_SIRALAMALARI, siteFiltreSecenekleri, siteUrunleri, URUN_ARAMA_CEREZI, type SiteSiralamasi } from "@/lib/site-urunleri";
+import UrunFiltreleri, { AramayiTemizle } from "@/app/component_page/UrunFiltreleri";
+import Link from "next/link";
 import UrunKarti from "@/app/component_page/UrunKarti";
 import { cn } from "@/lib/utils";
 
@@ -16,14 +17,15 @@ export const metadata: Metadata = {
 
 const ADET = 24;
 
-type Props = { searchParams: Promise<{ ara?: string; kategori?: string; marka?: string; model?: string; sirala?: string; sayfa?: string }> };
+// Arama kelimesi adreste değil çerezde taşınır (src/actions/urun-arama.ts); diğer filtreler adreste kalır.
+type Props = { searchParams: Promise<{ kategori?: string; marka?: string; model?: string; sirala?: string; sayfa?: string }> };
 
 // Kısa ve düz metin kabul edilir (elle bozulmuş adreslere karşı).
 const metinOku = (v?: string) => (v && v.length <= 100 ? v.trim() : "");
 
 export default async function UrunlerSayfasi({ searchParams }: Props) {
-    const p = await searchParams;
-    const ara = metinOku(p.ara);
+    const [p, cerezler] = await Promise.all([searchParams, cookies()]);
+    const ara = metinOku(cerezler.get(URUN_ARAMA_CEREZI)?.value);
     const marka = metinOku(p.marka);
     const model = metinOku(p.model);
     const kategori = p.kategori && /^[0-9a-f-]{36}$/i.test(p.kategori) ? p.kategori : "";
@@ -40,7 +42,6 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
 
     const link = (s: number) => {
         const q = new URLSearchParams();
-        if (ara) q.set("ara", ara);
         if (kategori) q.set("kategori", kategori);
         if (marka) q.set("marka", marka);
         if (model) q.set("model", model);
@@ -82,9 +83,9 @@ export default async function UrunlerSayfasi({ searchParams }: Props) {
                         {filtreli ? (
                             <>
                                 {ara ? `"${ara}" aramasına uygun ürün bulunamadı.` : "Seçtiğiniz filtrelere uygun ürün bulunamadı."}
-                                <Link href="/urunler" className="font-medium text-[var(--color-primary)] hover:underline">
+                                <AramayiTemizle className="font-medium text-[var(--color-primary)] hover:underline">
                                     Tüm ürünleri göster
-                                </Link>
+                                </AramayiTemizle>
                             </>
                         ) : (
                             "Yakında ürünlerimiz burada olacak."

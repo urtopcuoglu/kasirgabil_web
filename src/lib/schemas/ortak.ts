@@ -32,3 +32,14 @@ export const opsiyonelSayi = ({ min = 0, max, tamSayi = false }: { min?: number;
         .refine((v) => (sayiOku(v) ?? min) >= min, { error: `En az ${min} olabilir.` })
         .refine((v) => (sayiOku(v) ?? 0) <= max, { error: "Değer çok büyük." })
         .refine((v) => !tamSayi || Number.isInteger(sayiOku(v) ?? 0), { error: "Tam sayı girin." });
+
+// Türkçe harf duyarsız arama metni: "IŞIK", "Işık", "isik" → "isik".
+// Veritabanındaki public.arama_metni() ile aynı dönüşümü yapar (migration 20261105120000); biri değişirse diğeri de değişmeli.
+const ARAMA_HARFLERI: Record<string, string> = {
+    İ: "i", I: "i", ı: "i", Ş: "s", ş: "s", Ğ: "g", ğ: "g", Ü: "u", ü: "u", Ö: "o", ö: "o", Ç: "c", ç: "c",
+    Â: "a", â: "a", Î: "i", î: "i", Û: "u", û: "u",
+};
+export const aramaMetni = (s: string) => s.replace(/[İIıŞşĞğÜüÖöÇçÂâÎîÛû]/g, (h) => ARAMA_HARFLERI[h]).toLowerCase();
+
+// Marka/model gibi adların karşılaştırma anahtarı: büyük/küçük harf ve fazla boşluk yok sayılır.
+export const adAnahtari = (s: string | null | undefined) => aramaMetni((s ?? "").trim().replace(/\s+/g, " "));

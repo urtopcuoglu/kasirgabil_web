@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { izinVar } from "@/lib/izinler";
 import { dbHataMesaji, oturum } from "@/lib/supabase/yetkili";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Eye, Globe, Pencil, Plus, ScanBarcode } from "lucide-react";
 import { urunSil } from "@/actions/stok";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { kategoriAgaci, URUN_DURUMLARI, type Kutu, type Urun, type UrunKategori } from "@/lib/schemas/stok";
 import { paraYaz } from "@/lib/tarih";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,8 @@ type UrunSatiri = Urun & { kutular: Pick<Kutu, "kutu_no" | "marka" | "model"> | 
 export default async function StokSayfasi({ searchParams }: Props) {
     const p = await searchParams;
     const sayfa = sayfaOku(p.sayfa);
-    const f = stokFiltreleriOku(p);
+    // Arama kelimesi adreste değil çerezde taşınır (src/lib/panel-arama.ts).
+    const f = stokFiltreleriOku({ ...p, q: await panelAramasiOku("/admin/stok") });
     const { q, kategori, durum, stok, site, sirala } = f;
 
     const filtreler = filtreParametreleri(f);
@@ -44,16 +45,7 @@ export default async function StokSayfasi({ searchParams }: Props) {
     const o = await oturum();
     const yonetici = izinVar(o?.rol, "stok_yonet");
 
-    // Barkod okuyucu / elle tam kod: stok kodu, barkod veya seri no tek ürüne denk geliyorsa doğrudan ürüne gidilir.
-    // Yalnızca harf/rakam/nokta/tire içeren aramalarda denenir (PostgREST filtre sözdizimi bozulmasın).
-    if (/^[\p{L}\d.-]+$/u.test(q)) {
-        const { data: tam } = await supabase
-            .from("urunler")
-            .select("id")
-            .or(`stok_kodu.eq.${q},barkod.eq.${q},seri_no.ilike.${q}`)
-            .limit(2);
-        if (tam?.length === 1) redirect(`/admin/stok/${tam[0].id}`);
-    }
+    // Barkodla tek ürüne denk gelen arama, formu gönderirken doğrudan ürüne yönlendirilir (panelFiltreUygula).
 
     const { data: kategoriData } = await supabase.from("urun_kategorileri").select("id, ad, ust_id, kutu_sistemi");
     const kategoriler = (kategoriData ?? []) as UrunKategori[];

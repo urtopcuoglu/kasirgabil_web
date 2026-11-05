@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink, Pencil, Plus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { panelAramasiOku } from "@/lib/panel-arama";
 import { dbHataMesaji } from "@/lib/supabase/yetkili";
 import { BLOG_DURUMLARI, type BlogKategori, type BlogYazisi } from "@/lib/schemas/icerik";
 import { tarihSaatYaz } from "@/lib/tarih";
@@ -24,9 +25,9 @@ type YaziSatiri = Pick<BlogYazisi, "id" | "baslik" | "slug" | "durum" | "yayin_t
 
 const DURUM_FILTRELERI = ["", "taslak", "yayinda"] as const;
 
-export default async function BlogYazilariSayfasi({ searchParams }: { searchParams: Promise<{ q?: string; durum?: string }> }) {
+export default async function BlogYazilariSayfasi({ searchParams }: { searchParams: Promise<{ durum?: string }> }) {
     const p = await searchParams;
-    const q = (p.q ?? "").trim();
+    const q = await panelAramasiOku("/admin/icerik"); // adreste değil çerezde (src/lib/panel-arama.ts)
     const durum = secenekOku(p.durum, DURUM_FILTRELERI, "");
 
     const supabase = await createClient();

@@ -5,6 +5,10 @@ import { cache } from "react";
 import { revalidatePath } from "next/cache";
 import { anonIstemci } from "@/lib/supabase/anon";
 import { kategoriAgaci, type Urun, type UrunKategori } from "@/lib/schemas/stok";
+import { adAnahtari, aramaMetni } from "@/lib/schemas/ortak";
+
+// Vitrin araması bu çerezde taşınır (adres çubuğunda görünmez) — src/actions/urun-arama.ts.
+export const URUN_ARAMA_CEREZI = "urun_ara";
 
 export type SiteUrunu = Pick<
     Urun,
@@ -23,12 +27,8 @@ export type SiteSiralamasi = keyof typeof SITE_SIRALAMALARI;
 
 export type SiteUrunFiltresi = { ara?: string; marka?: string; model?: string; kategori?: string; sirala: SiteSiralamasi; sayfa: number; adet: number };
 
-// PostgREST "or" filtresinde değer çift tırnak içine alınır; tırnak ve ters bölü kaçırılır.
-// Önce LIKE joker karakterleri (% _ \) metin olarak aransın diye kaçırılır.
-function orIlikeDegeri(q: string) {
-    const likeGuvenli = q.replace(/[\\%_]/g, (k) => `\\${k}`);
-    return `"%${likeGuvenli.replace(/["\\]/g, (k) => `\\${k}`)}%"`;
-}
+// LIKE joker karakterleri (% _ \) metin olarak aransın diye kaçırılır.
+const likeGuvenli = (q: string) => q.replace(/[\\%_]/g, (k) => `\\${k}`);
 
 // Panelde ürün, stok veya görsel değişince vitrin sayfaları yenilenir.
 export function vitrinUrunleriniYenile() {
@@ -60,15 +60,22 @@ export async function siteFiltreSecenekleri(secilenMarka?: string) {
     if (error) console.error("[siteFiltreSecenekleri]", error.message);
     const satirlar = (data ?? []) as Pick<Urun, "marka" | "model" | "site_kategori_id">[];
 
-    const benzersiz = (liste: (string | null)[]) =>
-        [...new Set(liste.map((v) => v?.trim()).filter((v): v is string => !!v))].toSorted((a, b) => a.localeCompare(b, "tr"));
+    // "Lenovo", "LENOVO" ve "lenovo " tek seçenek olur (ilk görülen yazım gösterilir).
+    const benzersiz = (liste: (string | null)[]) => {
+        const harita = new Map<string, string>();
+        for (const v of liste) {
+            const ad = v?.trim().replace(/\s+/g, " ");
+            if (ad && !harita.has(adAnahtari(ad))) harita.set(adAnahtari(ad), ad);
+        }
+        return [...harita.values()].toSorted((a, b) => a.localeCompare(b, "tr"));
+    };
 
     const kullanilan = new Set(satirlar.map((s) => s.site_kategori_id).filter((v): v is string => !!v));
     const kategoriler = agac.sirali.filter((k) => agac.altlariyla(k.id).some((id) => kullanilan.has(id)));
 
     return {
         markalar: benzersiz(satirlar.map((s) => s.marka)),
-        modeller: benzersiz(satirlar.filter((s) => !secilenMarka || s.marka?.trim() === secilenMarka).map((s) => s.model)),
+        modeller: benzersiz(satirlar.filter((s) => !secilenMarka || adAnahtari(s.marka) === adAnahtari(secilenMarka)).map((s) => s.model)),
         kategoriler,
         agac,
     };
@@ -84,12 +91,11 @@ export async function siteUrunleri({ ara, marka, model, kategori, sirala, sayfa,
         .order("id")
         .range((sayfa - 1) * adet, sayfa * adet - 1);
 
-    if (ara) {
-        const v = orIlikeDegeri(ara);
-        sorgu = sorgu.or(`site_ad.ilike.${v},stok_kodu.ilike.${v}`);
-    }
-    if (marka) sorgu = sorgu.eq("marka", marka);
-    if (model) sorgu = sorgu.eq("model", model);
+    // Ad, stok kodu, marka ve model içinde; Türkçe büyük/küçük harf farkı yok sayılır (site_arama sütunu).
+    if (ara) sorgu = sorgu.like("site_arama", `%${likeGuvenli(aramaMetni(ara))}%`);
+    // Marka/model büyük/küçük harf duyarsız tam eşleşme (joker yok).
+    if (marka) sorgu = sorgu.ilike("marka", likeGuvenli(marka));
+    if (model) sorgu = sorgu.ilike("model", likeGuvenli(model));
     if (kategori) sorgu = sorgu.in("site_kategori_id", (await siteKategoriAgaci()).altlariyla(kategori));
 
     const { data, count, error } = await sorgu;
