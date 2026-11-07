@@ -24,9 +24,11 @@ export default async function PersonelDuzenleSayfasi({ params }: { params: Promi
     // Giriş e-postası auth tarafındadır; yönetici istemcisi (gizli anahtar) varsa okunur.
     const yonetici = yoneticiIstemci();
     let girisEmail: string | null = null;
+    let mfaAktif = false;
     if (yonetici && personel.auth_user_id) {
         const { data: kullanici } = await yonetici.auth.admin.getUserById(personel.auth_user_id);
         girisEmail = kullanici.user?.email ?? null;
+        mfaAktif = (kullanici.user?.factors ?? []).some((f) => f.status === "verified");
     }
     const kendisi = !!personel.auth_user_id && personel.auth_user_id === (await oturum())?.kullaniciId;
 
@@ -47,6 +49,7 @@ export default async function PersonelDuzenleSayfasi({ params }: { params: Promi
                     aktif={personel.aktif}
                     girisVar={!!personel.auth_user_id}
                     girisEmail={girisEmail}
+                    mfaAktif={mfaAktif}
                     kendisi={kendisi}
                     anahtarVar={!!yonetici}
                     anahtarMesaji={GIZLI_ANAHTAR_EKSIK}

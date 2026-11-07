@@ -3,7 +3,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Copy, KeyRound, Loader2, LogIn, RefreshCw, UserX } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, LogIn, RefreshCw, ShieldCheck, ShieldOff, UserX } from "lucide-react";
+import { personelDogrulamasiniSifirla } from "@/actions/iki-adimli";
 import { panelGirisiAc, panelGirisiKapat, panelSifresiSifirla } from "@/actions/kullanici";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ type Props = {
     personelId: string;
     aktif: boolean;
     girisEmail: string | null; // girişi varsa e-postası
+    mfaAktif: boolean; // iki adımlı doğrulama (TOTP) kurulu mu
     girisVar: boolean;
     kendisi: boolean; // oturumdaki kullanıcının kendi kaydı
     anahtarVar: boolean; // SUPABASE_SECRET_KEY tanımlı mı
@@ -29,7 +31,7 @@ function geciciSifreUret() {
     return karakterler.sort(() => (crypto.getRandomValues(new Uint8Array(1))[0] > 127 ? 1 : -1)).join("");
 }
 
-export default function PanelGirisi({ personelId, aktif, girisEmail, girisVar, kendisi, anahtarVar, anahtarMesaji }: Props) {
+export default function PanelGirisi({ personelId, aktif, girisEmail, mfaAktif, girisVar, kendisi, anahtarVar, anahtarMesaji }: Props) {
     const [email, setEmail] = useState("");
     // Boş başlar (sunucu/tarayıcı aynı render etsin); gönderimde boşsa üretilir.
     const [sifre, setSifre] = useState("");
@@ -78,6 +80,10 @@ export default function PanelGirisi({ personelId, aktif, girisEmail, girisVar, k
                     <p className="text-sm">
                         Giriş e-postası: <span className="font-medium">{girisEmail ?? "—"}</span>
                     </p>
+                    <p className="flex items-center gap-1.5 text-sm">
+                        {mfaAktif ? <ShieldCheck className="size-4 text-green-600" /> : <ShieldOff className="size-4 text-gray-400" />}
+                        İki adımlı doğrulama: <span className="font-medium">{mfaAktif ? "Etkin" : "Kapalı"}</span>
+                    </p>
                     <div className="flex flex-wrap gap-2">
                         <Button
                             type="button"
@@ -90,6 +96,20 @@ export default function PanelGirisi({ personelId, aktif, girisEmail, girisVar, k
                         >
                             {bekliyor ? <Loader2 className="animate-spin" /> : <KeyRound />} Şifreyi sıfırla
                         </Button>
+                        {mfaAktif && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={bekliyor}
+                                onClick={() => {
+                                    if (window.confirm("Bu personelin iki adımlı doğrulaması sıfırlansın mı? Personel bir sonraki girişinde doğrulama uygulamasını yeniden kurar (ör. telefon kaybı).")) {
+                                        calistir(() => personelDogrulamasiniSifirla(personelId));
+                                    }
+                                }}
+                            >
+                                <ShieldOff /> Doğrulamayı sıfırla
+                            </Button>
+                        )}
                         {!kendisi && (
                             <Button
                                 type="button"

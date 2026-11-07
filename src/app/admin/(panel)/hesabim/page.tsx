@@ -2,8 +2,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ROLLER } from "@/lib/schemas/personel";
+import { createClient } from "@/lib/supabase/server";
 import { oturum } from "@/lib/supabase/yetkili";
 import { SayfaBasligi } from "../../_components/form";
+import TelefonTasi from "./TelefonTasi";
 import SifreFormu from "./SifreFormu";
 
 export const metadata: Metadata = {
@@ -13,6 +15,10 @@ export const metadata: Metadata = {
 export default async function HesabimSayfasi() {
     const o = await oturum();
     if (!o) redirect("/admin/giris");
+
+    const supabase = await createClient();
+    const { data: faktorler } = await supabase.auth.mfa.listFactors();
+    const mfaEtkin = (faktorler?.totp.length ?? 0) > 0;
 
     return (
         <div className="max-w-xl space-y-4">
@@ -47,6 +53,13 @@ export default async function HesabimSayfasi() {
                 <h2 className="mb-4 font-semibold text-[var(--color-secondary)]">Şifre Değiştir</h2>
                 <SifreFormu />
             </section>
+
+            {mfaEtkin && (
+                <section className="rounded-xl border bg-white p-5 shadow-sm">
+                    <h2 className="mb-4 font-semibold text-[var(--color-secondary)]">İki Adımlı Doğrulama</h2>
+                    <TelefonTasi />
+                </section>
+            )}
         </div>
     );
 }

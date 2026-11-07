@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const GIRIS_YOLU = "/admin/giris";
 const HESAP_YOLU = "/admin/hesabim";
+const DOGRULA_YOLU = "/admin/dogrula";
 
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({ request });
@@ -53,9 +54,23 @@ export async function updateSession(request: NextRequest) {
         return yonlendir(url, response);
     }
 
+    // İki adımlı doğrulama tüm personel için zorunludur: oturum aal2 olana kadar (uygulama kurulumu ya da kod girişi)
+    // yalnızca doğrulama sayfası açılır. "aal" imzalı JWT'dedir. Asıl engel veritabanındaki RLS politikalarıdır (mfa_zorunlu).
+    const kodGerekli = data?.claims?.aal !== "aal2";
+    const dogrulaSayfasi = pathname === DOGRULA_YOLU;
+    if (kodGerekli !== dogrulaSayfasi) {
+        const url = request.nextUrl.clone();
+        url.pathname = kodGerekli ? DOGRULA_YOLU : "/admin";
+        url.search = "";
+        return yonlendir(url, response);
+    }
+    if (kodGerekli) return response;
+
     // Yöneticinin verdiği geçici şifreyle giren kullanıcı, kendi şifresini belirleyene kadar Hesabım sayfasında kalır.
+    // (Doğrulamadan sonra gelir: panel verileri ve Hesabım sayfası aal2 oturum gerektirir.)
     const sifreDegismeli = (data?.claims?.user_metadata as { sifre_degismeli?: boolean } | undefined)?.sifre_degismeli === true;
-    if (sifreDegismeli && pathname !== HESAP_YOLU) {
+    if (sifreDegismeli) {
+        if (pathname === HESAP_YOLU) return response;
         const url = request.nextUrl.clone();
         url.pathname = HESAP_YOLU;
         url.search = "";
