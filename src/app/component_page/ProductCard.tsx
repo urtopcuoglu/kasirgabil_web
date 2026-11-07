@@ -1,6 +1,7 @@
 // src/app/component_page/ProductCard.tsx
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface ProductCardProps {
     imageSrc: string;
@@ -46,12 +47,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 </div>
 
                 {/* Buton */}
-                <a
+                <Link
                     href={buttonLink}
                     className="inline-block self-start px-6 py-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] text-white rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 text-sm font-medium mt-auto transform active:scale-95"
                 >
                     {buttonText}
-                </a>
+                </Link>
             </div>
         </div>
     );

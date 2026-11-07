@@ -276,8 +276,8 @@ const Header = ({ iletisim, bankaHesaplari }: HeaderProps) => {
             {/* Banner Section below Header */}
             <div className="bg-[var(--color-primary)] text-white py-2 px-4">
                 <div className="container mx-auto flex justify-between items-center text-sm font-semibold">
-                    <Link href="#" className="border-b-2 border-transparent hover:border-white transition-all duration-300">Güvenin Başkenti</Link>
-                    <Link href="#" className="border-b-2 border-transparent hover:border-white transition-all duration-300 text-right">Kasırga Bilgisayar Teknik Servis ve Alışveriş Rehberi</Link>
+                    <Link href="/public/about" className="border-b-2 border-transparent hover:border-white transition-all duration-300">Güvenin Başkenti</Link>
+                    <Link href="/blog" className="border-b-2 border-transparent hover:border-white transition-all duration-300 text-right">Kasırga Bilgisayar Teknik Servis ve Alışveriş Rehberi</Link>
                 </div>
             </div>
         </header>

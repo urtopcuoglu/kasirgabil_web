@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import BlogMakale from "@/app/component_page/BlogMakale";
 import { blogYazisi } from "@/lib/icerik";
+import { jsonLd, mutlakAdres } from "@/lib/site-adresi";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -32,8 +33,23 @@ export default async function BlogYazisiSayfasi({ params }: Props) {
     const yazi = await blogYazisi((await params).slug);
     if (!yazi) notFound();
 
+    const yapisalVeri = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        headline: yazi.seo_baslik || yazi.baslik,
+        description: yazi.seo_aciklama || yazi.ozet || undefined,
+        image: yazi.kapak_gorsel_url ? [yazi.kapak_gorsel_url] : undefined,
+        datePublished: yazi.yayin_tarihi ?? undefined,
+        dateModified: yazi.updated_at,
+        mainEntityOfPage: mutlakAdres(`/blog/${yazi.slug}`),
+        articleSection: yazi.blog_kategorileri?.ad,
+        author: { "@type": "Organization", name: "Kasırga Bilgisayar", url: mutlakAdres("/") },
+        publisher: { "@type": "Organization", name: "Kasırga Bilgisayar", logo: { "@type": "ImageObject", url: mutlakAdres("/logo/logo.png") } },
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 px-4 py-12 dark:bg-zinc-800">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(yapisalVeri) }} />
             <div className="mx-auto mb-6 max-w-3xl">
                 <Link href="/blog" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[var(--color-primary)]">
                     <ArrowLeft className="size-4" /> Tüm yazılar

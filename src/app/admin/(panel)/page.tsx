@@ -1,8 +1,8 @@
 // src/app/admin/(panel)/page.tsx
-// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar, kritik stok, satış ve kasa analizi (dönem seçmeli) ve stok metrikleri.
+// Özet: role göre bugünkü kasa, servis durumu, teslime hazır cihazlar, kritik stok, satış ve kasa analizi (dönem seçmeli), stok metrikleri ve site vitrini.
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Boxes, Cpu, Laptop, MemoryStick, Monitor, Package, PackagePlus, Phone, Plus, ShieldAlert, Tag, Trophy, Wallet, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowRight, Boxes, Cpu, Globe, ImageOff, Laptop, MemoryStick, Monitor, Package, PackagePlus, PackageX, Phone, Plus, ShieldAlert, Tag, Trophy, Wallet, Wrench } from "lucide-react";
 import { izinVar } from "@/lib/izinler";
 import { stokOzeti, type DalOzeti } from "@/lib/stok";
 import { createClient } from "@/lib/supabase/server";
@@ -35,7 +35,7 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
     const bugun = bugunISO();
     const supabase = await createClient();
 
-    const [servisSonucu, kritikSonucu, kasa, stok, analiz] = await Promise.all([
+    const [servisSonucu, kritikSonucu, kasa, stok, analiz, vitrin] = await Promise.all([
         supabase
             .from("teknik_servis_kayitlari")
             .select("id, form_no, musteri_ad_soyad, musteri_telefon, cihaz_marka_model, durum, tahmini_teslim_tarihi")
@@ -52,6 +52,7 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
         stokOzeti(supabase),
         // Satış ve kasa analizi yalnızca kasa izni olanlara; okunamazsa bölüm hata mesajıyla gösterilir.
         kasaGorur ? kasaAnalizi(supabase, donem).catch((e: unknown) => (e instanceof Error ? e : new Error(String(e)))) : Promise.resolve(null),
+        vitrinOzeti(supabase),
     ]);
 
     const acikServisler = (servisSonucu.data ?? []) as AcikServis[];
@@ -245,6 +246,46 @@ export default async function AdminOzetSayfasi({ searchParams }: { searchParams:
                 </div>
             </section>
 
+            {/* Site vitrini: sitede yayınlanan ürünlerin durumu */}
+            <section>
+                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 className="font-semibold text-[var(--color-secondary)]">Site Vitrini</h2>
+                    <Link href="/urunler" target="_blank" className="text-sm text-[var(--color-secondary)] hover:underline">
+                        Sitede görüntüle
+                    </Link>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <Metrik
+                        baslik="Sitede Yayında"
+                        Ikon={Globe}
+                        deger={sayiYaz(vitrin.yayinda)}
+                        alt={`${sayiYaz(vitrin.yayindaStokta)} ürün sitede "Stokta" görünüyor`}
+                        href={linkOlustur("/admin/stok", { site: "evet" })}
+                    />
+                    <Metrik
+                        baslik="Sitede Tükendi Görünen"
+                        Ikon={PackageX}
+                        deger={sayiYaz(vitrin.yayinda - vitrin.yayindaStokta)}
+                        alt="Yayında ama stoğu yok ya da sitede stoğu kapalı"
+                        href={linkOlustur("/admin/stok", { site: "evet", stok: "yok" })}
+                    />
+                    <Metrik
+                        baslik="Stokta, Sitede Değil"
+                        Ikon={ImageOff}
+                        deger={sayiYaz(vitrin.stoktaYayindaDegil)}
+                        alt="Siteye eklenebilecek stoktaki ürünler"
+                        href={linkOlustur("/admin/stok", { site: "hayir", stok: "var" })}
+                    />
+                    <Metrik
+                        baslik="Son Yayınlanan"
+                        Ikon={Globe}
+                        deger={vitrin.son ? new Date(vitrin.son.created_at).toLocaleDateString("tr-TR", { timeZone: "Europe/Istanbul" }) : "—"}
+                        alt={vitrin.son ? `${vitrin.son.stok_kodu} · ${vitrin.son.site_ad ?? ""}` : "Sitede ürün yok"}
+                        href={vitrin.son ? `/admin/stok/${vitrin.son.id}` : undefined}
+                    />
+                </div>
+            </section>
+
             {/* Teslime hazır cihazlar: müşteri aranmalı */}
             {teslimHazir.length > 0 && (
                 <section className="rounded-xl border bg-white shadow-sm">
@@ -300,6 +341,30 @@ async function kasaVerisi(supabase: Awaited<ReturnType<typeof createClient>>, bu
         kapandi: !!gun.data?.kapandi,
         beklenen: Number(beklenen.data ?? 0),
         kapanmamisGun: acikGunler[0] ?? null,
+    };
+}
+
+// Site vitrini sayıları (yalnızca sayım; satır indirilmez).
+async function vitrinOzeti(supabase: Awaited<ReturnType<typeof createClient>>) {
+    const say = { count: "exact" as const, head: true };
+    const [yayinda, yayindaStokta, stoktaDegil, son] = await Promise.all([
+        supabase.from("urunler").select("id", say).eq("sitede", true),
+        supabase.from("urunler").select("id", say).eq("sitede", true).eq("site_stokta", true),
+        supabase.from("urunler").select("id", say).eq("sitede", false).gt("stok_adedi", 0),
+        supabase
+            .from("urunler")
+            .select("id, stok_kodu, site_ad, created_at")
+            .eq("sitede", true)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+    ]);
+    for (const r of [yayinda, yayindaStokta, stoktaDegil, son]) if (r.error) console.error("[vitrinOzeti]", r.error.message);
+    return {
+        yayinda: yayinda.count ?? 0,
+        yayindaStokta: yayindaStokta.count ?? 0,
+        stoktaYayindaDegil: stoktaDegil.count ?? 0,
+        son: son.data as Pick<Urun, "id" | "stok_kodu" | "site_ad" | "created_at"> | null,
     };
 }
 

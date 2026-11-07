@@ -11,6 +11,7 @@ import UrunGaleri from "@/app/component_page/UrunGaleri";
 import UrunIletisimButonlari from "@/app/component_page/UrunIletisimButonlari";
 import UrunKarti, { StokRozeti } from "@/app/component_page/UrunKarti";
 import { cn } from "@/lib/utils";
+import { jsonLd, mutlakAdres } from "@/lib/site-adresi";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
         title: `${urun.site_ad} | Kasırga Bilgisayar`,
         description: urun.site_aciklama?.replace(/\s+/g, " ").slice(0, 160),
+        alternates: { canonical: `/urun/${urun.site_slug}` },
         openGraph: { images: urun.site_gorseller.slice(0, 1) },
     };
 }
@@ -41,8 +43,35 @@ export default async function UrunDetaySayfasi({ params }: Props) {
         { etiket: "Ürün Kodu", deger: urun.stok_kodu },
     ].filter((o) => o.deger);
 
+    // Arama motorları için yapısal veri (fiyat gösterilmediği için Offer eklenmez).
+    const yapisalVeri = [
+        {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: urun.site_ad,
+            description: urun.site_aciklama ?? undefined,
+            image: urun.site_gorseller,
+            sku: urun.stok_kodu,
+            url: mutlakAdres(`/urun/${urun.site_slug}`),
+            brand: urun.marka ? { "@type": "Brand", name: urun.marka } : undefined,
+            model: urun.model ?? undefined,
+            category: kategoriYolu.join(" > ") || undefined,
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+                { name: "Anasayfa", item: mutlakAdres("/") },
+                { name: "Ürünler", item: mutlakAdres("/urunler") },
+                ...(urun.site_kategori_id && kategoriAdi ? [{ name: kategoriAdi, item: mutlakAdres(`/urunler?kategori=${urun.site_kategori_id}`) }] : []),
+                { name: urun.site_ad, item: mutlakAdres(`/urun/${urun.site_slug}`) },
+            ].map((o, i) => ({ "@type": "ListItem", position: i + 1, ...o })),
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-800">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(yapisalVeri) }} />
             <div className="container mx-auto max-w-7xl px-4 py-8">
                 <nav aria-label="Sayfa yolu" className="mb-6 flex flex-wrap items-center gap-1 text-sm text-gray-500 dark:text-zinc-400">
                     <Link href="/" className="hover:text-[var(--color-primary)]">

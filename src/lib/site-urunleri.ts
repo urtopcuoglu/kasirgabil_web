@@ -32,6 +32,7 @@ const likeGuvenli = (q: string) => q.replace(/[\\%_]/g, (k) => `\\${k}`);
 
 // Panelde ürün, stok veya görsel değişince vitrin sayfaları yenilenir.
 export function vitrinUrunleriniYenile() {
+    revalidatePath("/");
     revalidatePath("/urunler");
     revalidatePath("/urun/[slug]", "page");
 }
@@ -108,6 +109,19 @@ export const siteUrunu = cache(async (slug: string) => {
     if (error) console.error("[siteUrunu]", error.message);
     return data as SiteUrunu | null;
 });
+
+// Ana sayfadaki "Yeni Gelen Ürünler": yayındaki en son eklenenler (stoktakiler önce gelmez, sıra eklenme tarihidir).
+export async function sonEklenenSiteUrunleri(adet = 8) {
+    const { data, error } = await anonIstemci()
+        .from("urunler")
+        .select(SUTUNLAR)
+        .eq("sitede", true)
+        .order("created_at", { ascending: false })
+        .order("id")
+        .limit(adet);
+    if (error) console.error("[sonEklenenSiteUrunleri]", error.message);
+    return (data ?? []) as SiteUrunu[];
+}
 
 // Detay sayfasının altındaki "benzer ürünler": aynı kategoriden yayındaki diğer ürünler.
 export async function benzerUrunler(urun: SiteUrunu, adet = 4) {

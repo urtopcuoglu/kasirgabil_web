@@ -56,6 +56,10 @@ const nextConfig: NextConfig = {
             // Eski yasal sayfa URL'lerinden yeni sayfalara
             { source: '/kisisel-verilerin-korunmasi', destination: '/kvkk', permanent: true },
 
+            // /public/services altındaki kopya sayfalar kaldırıldı; tek adres /services (çift içerik oluşmasın)
+            { source: '/public/services', destination: '/services', permanent: true },
+            { source: '/public/services/:path*', destination: '/services/:path*', permanent: true },
+
             // Diğer eski sayfalar
             { source: '/alisveris-rehberi', destination: '/', permanent: true },
             { source: '/banka-hesap-numaralarimiz', destination: '/public/contact', permanent: true },

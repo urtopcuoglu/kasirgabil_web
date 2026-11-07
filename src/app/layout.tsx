@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SITE_ADRESI } from "@/lib/site-adresi";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -14,6 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+    // Göreli canonical ve Open Graph adresleri bu adrese göre mutlak yapılır.
+    metadataBase: new URL(SITE_ADRESI),
     title: "Kasırga Bilgisayar",
     description: "Güvenin Başkenti.",
     icons: {
