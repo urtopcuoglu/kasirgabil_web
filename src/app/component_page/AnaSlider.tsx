@@ -9,13 +9,19 @@ import { Navigation, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import type { Slider } from "@/lib/schemas/icerik";
+import type { SlaytOdagi, Slider } from "@/lib/schemas/icerik";
+import { cn } from "@/lib/utils";
+
+// Eski kayıtlarda odak alanı olmayabilir; o zaman ortadan kırpılır.
+const ODAK_SINIFI: Record<SlaytOdagi, string> = { ust: "object-top", orta: "object-center", alt: "object-bottom" };
 
 export default function AnaSlider({ slaytlar }: { slaytlar: Slider["slaytlar"] }) {
     if (slaytlar.length === 0) return null;
 
     return (
-        <div className="relative mb-12 h-[500px] w-full">
+        // Yükseklik genişlikle orantılı: mobilde görselin tamamı (3:2), geniş ekranda 21:9, en fazla 640 px.
+        // Kırpılan kısım slaytın odağına göre seçilir (panelde "Görsel odağı").
+        <div className="relative mb-12 aspect-[3/2] max-h-[640px] w-full sm:aspect-[2/1] lg:aspect-[21/9]">
             <Swiper
                 modules={[Navigation, Pagination]}
                 spaceBetween={30}
@@ -33,7 +39,7 @@ export default function AnaSlider({ slaytlar }: { slaytlar: Slider["slaytlar"] }
                             fill
                             priority={i === 0}
                             sizes="100vw"
-                            className="object-cover"
+                            className={cn("object-cover", ODAK_SINIFI[slayt.odak ?? "orta"])}
                         />
                     );
                     return (

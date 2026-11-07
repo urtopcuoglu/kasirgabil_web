@@ -79,6 +79,10 @@ export const hakkimizdaSemasi = z.object({
     gorsel: gorselAlani,
 });
 
+export const SLAYT_ODAKLARI = ["ust", "orta", "alt"] as const;
+export type SlaytOdagi = (typeof SLAYT_ODAKLARI)[number];
+export const SLAYT_ODAK_ETIKETLERI: Record<SlaytOdagi, string> = { ust: "Üst kısım", orta: "Orta", alt: "Alt kısım" };
+
 export const sliderSemasi = z.object({
     slaytlar: z
         .array(
@@ -86,6 +90,8 @@ export const sliderSemasi = z.object({
                 gorsel: gorselAlani.refine((v) => v !== "", { error: "Görsel seçin." }),
                 aciklama: opsiyonelMetin(150), // görselin alternatif metni
                 link: linkAlani,
+                // Geniş ekranda görselin alt/üstü kırpılır; logo gibi önemli kısım hangi bölgedeyse o seçilir.
+                odak: z.enum(SLAYT_ODAKLARI),
             })
         )
         .min(1, { error: "En az bir slayt olmalı." })

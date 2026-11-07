@@ -12,6 +12,8 @@ import {
     hakkimizdaSemasi,
     iletisimSemasi,
     sliderSemasi,
+    SLAYT_ODAKLARI,
+    SLAYT_ODAK_ETIKETLERI,
     yasalSayfaSemasi,
     type BankaHesaplari,
     type Hakkimizda,
@@ -273,12 +275,19 @@ export function SliderFormu({ deger }: { deger: Slider }) {
         handleSubmit,
         control,
         formState: { errors },
-    } = useForm<Slider>({ resolver: zodResolver(sliderSemasi), defaultValues: deger });
+    } = useForm<Slider>({
+        resolver: zodResolver(sliderSemasi),
+        // Odak alanı sonradan eklendi; eski kayıtlardaki slaytlar "orta" ile açılır.
+        defaultValues: { slaytlar: deger.slaytlar.map((sl) => ({ ...sl, odak: sl.odak ?? "orta" })) },
+    });
     const { fields, append, remove, move } = useFieldArray({ control, name: "slaytlar" });
 
     return (
         <form onSubmit={handleSubmit(kaydet)} className="max-w-4xl space-y-4">
-            <p className="text-sm text-gray-500">Önerilen görsel boyutu: 1920 × 500 piksel (geniş ve kısa). Sıra, sitedeki gösterim sırasıdır.</p>
+            <p className="text-sm text-gray-500">
+                Önerilen: en az 1920 piksel genişlikte yatay görsel. Mobilde görselin tamamı görünür; geniş ekranda alt ve üstü kırpılır, logo
+                gibi kesilmemesi gereken kısım nerdeyse &quot;Görsel odağı&quot;nı ona göre seçin. Sıra, sitedeki gösterim sırasıdır.
+            </p>
             {fields.map((f, i) => {
                 const s = errors.slaytlar?.[i];
                 return (
@@ -288,7 +297,7 @@ export function SliderFormu({ deger }: { deger: Slider }) {
                             name={`slaytlar.${i}.gorsel`}
                             render={({ field }) => (
                                 <div>
-                                    <GorselSecici id={`slayt_${i}`} deger={field.value} onChange={field.onChange} klasor="slider" oran="aspect-[1920/500]" />
+                                    <GorselSecici id={`slayt_${i}`} deger={field.value} onChange={field.onChange} klasor="slider" oran="aspect-[21/9]" />
                                     {s?.gorsel && <p className="mt-1 text-xs text-[var(--color-primary)]">{s.gorsel.message}</p>}
                                 </div>
                             )}
@@ -309,6 +318,15 @@ export function SliderFormu({ deger }: { deger: Slider }) {
                             <Alan etiket="Tıklanınca gidilecek adres (opsiyonel)" htmlFor={`link_${i}`} hata={s?.link?.message}>
                                 <input id={`link_${i}`} placeholder="/services/tamir-ve-bakim" className={inputSinifi} {...register(`slaytlar.${i}.link`)} />
                             </Alan>
+                            <Alan etiket="Görsel odağı" htmlFor={`odak_${i}`} hata={s?.odak?.message}>
+                                <select id={`odak_${i}`} className={inputSinifi} {...register(`slaytlar.${i}.odak`)}>
+                                    {SLAYT_ODAKLARI.map((o) => (
+                                        <option key={o} value={o}>
+                                            {SLAYT_ODAK_ETIKETLERI[o]}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Alan>
                         </div>
                     </div>
                 );
@@ -316,7 +334,7 @@ export function SliderFormu({ deger }: { deger: Slider }) {
             {errors.slaytlar?.root && <FormHatasi mesaj={errors.slaytlar.root.message} />}
             {errors.slaytlar?.message && <FormHatasi mesaj={errors.slaytlar.message} />}
             {fields.length < 10 && (
-                <Button type="button" variant="outline" onClick={() => append({ gorsel: "", aciklama: "", link: "" })}>
+                <Button type="button" variant="outline" onClick={() => append({ gorsel: "", aciklama: "", link: "", odak: "orta" })}>
                     <Plus /> Slayt ekle
                 </Button>
             )}
