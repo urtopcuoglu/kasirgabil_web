@@ -1,9 +1,8 @@
 // src/lib/site-adresi.ts
 // Sitenin kalıcı adresi (sitemap, robots, canonical ve JSON-LD için mutlak URL).
-// Öncelik: NEXT_PUBLIC_SITE_URL → Vercel'in üretim alan adı → kasirgabilgisayar.com.
-const hamAdres =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "https://kasirgabilgisayar.com");
+// Öncelik: SITE_URL (production'da tanımlı, proxy ve panel de bunu kullanır) → NEXT_PUBLIC_SITE_URL → kasirgabilgisayar.com.
+// Vercel'in üretim alan adı kullanılmaz: panel alan adı (admin.) ya da vercel.app adresi olabilir.
+const hamAdres = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "https://kasirgabilgisayar.com";
 
 export const SITE_ADRESI = hamAdres.replace(/\/+$/, "");
 
