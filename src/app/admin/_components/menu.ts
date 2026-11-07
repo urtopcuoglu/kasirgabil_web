@@ -8,7 +8,7 @@ export type MenuOgesi = {
     etiket: string;
     ikon: LucideIcon;
     izin?: Izin;
-    rozet?: "mesajlar" | "sohbet"; // yanında sayı gösterilir (layout'tan gelir)
+    rozet?: "mesajlar" | "sohbet" | "talepler"; // yanında sayı gösterilir (layout'tan gelir)
 };
 
 export const menuOgeleri: MenuOgesi[] = [
@@ -22,5 +22,5 @@ export const menuOgeleri: MenuOgesi[] = [
     { href: "/admin/sohbetler", etiket: "Canlı Sohbet", ikon: MessagesSquare, izin: "sohbet", rozet: "sohbet" },
     { href: "/admin/mesajlar", etiket: "Mesajlar", ikon: Inbox, izin: "mesajlar", rozet: "mesajlar" },
     { href: "/admin/icerik", etiket: "İçerik / Blog", ikon: FileText, izin: "icerik" },
-    { href: "/admin/personel", etiket: "Personel", ikon: Users, izin: "personel" },
+    { href: "/admin/personel", etiket: "Personel", ikon: Users, izin: "personel", rozet: "talepler" },
 ];

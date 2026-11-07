@@ -7,6 +7,7 @@ import { Check, Copy, KeyRound, Loader2, LogIn, RefreshCw, ShieldCheck, ShieldOf
 import { personelDogrulamasiniSifirla } from "@/actions/iki-adimli";
 import { panelGirisiAc, panelGirisiKapat, panelSifresiSifirla } from "@/actions/kullanici";
 import { Button } from "@/components/ui/button";
+import { geciciSifreUret } from "@/lib/sifre";
 import { Label } from "@/components/ui/label";
 import { anaButonSinifi, FormHatasi, inputSinifi } from "../../../_components/form";
 
@@ -20,16 +21,6 @@ type Props = {
     anahtarVar: boolean; // SUPABASE_SECRET_KEY tanımlı mı
     anahtarMesaji: string;
 };
-
-// Okunması kolay geçici şifre: karışan karakterler (0/O, 1/l/I) yok, en az bir harf ve rakam.
-function geciciSifreUret() {
-    const harfler = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
-    const rakamlar = "23456789";
-    const tum = harfler + rakamlar;
-    const rastgele = crypto.getRandomValues(new Uint32Array(10));
-    const karakterler = Array.from(rastgele, (n, i) => (i === 0 ? harfler : i === 1 ? rakamlar : tum)[n % (i === 0 ? harfler.length : i === 1 ? rakamlar.length : tum.length)]);
-    return karakterler.sort(() => (crypto.getRandomValues(new Uint8Array(1))[0] > 127 ? 1 : -1)).join("");
-}
 
 export default function PanelGirisi({ personelId, aktif, girisEmail, mfaAktif, girisVar, kendisi, anahtarVar, anahtarMesaji }: Props) {
     const [email, setEmail] = useState("");

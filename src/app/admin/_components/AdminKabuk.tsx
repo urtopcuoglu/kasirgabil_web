@@ -19,15 +19,16 @@ type Props = {
     rol: Rol | null;
     okunmamisMesaj?: number;
     okunmamisSohbet?: number;
+    bekleyenTalep?: number;
     siteAdresi: string; // vitrin ana sayfası (SITE_URL; yerelde "/")
     children: React.ReactNode;
 };
 
-export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmamisSohbet = 0, siteAdresi, children }: Props) {
+export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmamisSohbet = 0, bekleyenTalep = 0, siteAdresi, children }: Props) {
     const pathname = usePathname();
     const [menuAcik, setMenuAcik] = useState(false);
     const sohbetSayisi = useSohbetBildirimi(izinVar(rol, "sohbet"), okunmamisSohbet);
-    const rozetler = { mesajlar: okunmamisMesaj, sohbet: sohbetSayisi };
+    const rozetler = { mesajlar: okunmamisMesaj, sohbet: sohbetSayisi, talepler: bekleyenTalep };
 
     // Mobilde bir sayfaya geçildiğinde menüyü kapat.
     useEffect(() => {
@@ -89,7 +90,7 @@ export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmam
                                 {rozet && rozetler[rozet] > 0 && (
                                     <span
                                         className="ml-auto rounded-full bg-white px-1.5 py-0.5 text-xs font-semibold tabular-nums text-[var(--color-primary)]"
-                                        aria-label={`${rozetler[rozet]} okunmamış`}
+                                        aria-label={`${rozetler[rozet]} ${rozet === "talepler" ? "bekleyen" : "okunmamış"}`}
                                     >
                                         {rozetler[rozet] > 99 ? "99+" : rozetler[rozet]}
                                     </span>

@@ -26,7 +26,7 @@ export default async function HesabimSayfasi() {
 
             {o.sifreDegismeli && (
                 <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    Size verilen geçici şifreyle giriş yaptınız. Devam etmek için kendi şifrenizi belirleyin.
+                    Devam etmek için kendi şifrenizi belirleyin (geçici şifreyle giriş ya da şifre sıfırlama sonrası).
                 </p>
             )}
 

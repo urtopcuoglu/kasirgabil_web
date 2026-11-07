@@ -5,29 +5,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { sifreAlani } from "@/lib/schemas/kullanici";
 import { GIZLI_ANAHTAR_EKSIK, yoneticiIstemci } from "@/lib/supabase/admin";
+import { authHataMesaji } from "@/lib/supabase/auth-hata";
 import { createClient } from "@/lib/supabase/server";
 import { dbHataMesaji, izinliIstemci, oturum, OTURUM_HATASI } from "@/lib/supabase/yetkili";
 import type { IslemSonucu } from "./personel";
-
-const sifreAlani = z
-    .string()
-    .min(8, { error: "Şifre en az 8 karakter olmalı." })
-    .max(72, { error: "Şifre en fazla 72 karakter olabilir." })
-    .refine((v) => /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(v) && /\d/.test(v), { error: "Şifrede en az bir harf ve bir rakam olmalı." });
 
 const girisSemasi = z.object({
     email: z.email({ error: "Geçerli bir e-posta adresi girin." }),
     sifre: sifreAlani,
 });
-
-// Auth API hatalarını Türkçeleştirir.
-function authHataMesaji(error: { message: string; code?: string }) {
-    console.error("[auth]", error.code, error.message);
-    if (error.code === "email_exists" || /already been registered/i.test(error.message)) return "Bu e-posta ile kayıtlı bir giriş zaten var.";
-    if (error.code === "weak_password") return "Şifre çok zayıf; daha uzun ve tahmini zor bir şifre seçin.";
-    return "Giriş işlemi yapılamadı. Lütfen tekrar deneyin.";
-}
 
 const personelYolu = (id: string) => `/admin/personel/${id}`;
 

@@ -43,14 +43,17 @@ export default async function PanelLayout({
         );
     }
 
-    // Menü rozetleri: okunmamış iletişim mesajı ve yanıt bekleyen (açık, okunmamış) sohbet sayısı.
+    // Menü rozetleri: okunmamış iletişim mesajı, yanıt bekleyen (açık, okunmamış) sohbet ve bekleyen kayıt talebi sayısı.
     const supabase = await createClient();
-    const [mesajSayisi, sohbetSayisi] = await Promise.all([
+    const [mesajSayisi, sohbetSayisi, talepSayisi] = await Promise.all([
         izinVar(o.rol, "mesajlar")
             ? supabase.from("iletisim_mesajlari").select("id", { count: "exact", head: true }).eq("okundu", false)
             : null,
         izinVar(o.rol, "sohbet")
             ? supabase.from("sohbetler").select("id", { count: "exact", head: true }).eq("okunmamis", true).eq("durum", "acik")
+            : null,
+        izinVar(o.rol, "personel")
+            ? supabase.from("personel_talepleri").select("id", { count: "exact", head: true }).eq("durum", "bekliyor")
             : null,
     ]);
 
@@ -61,6 +64,7 @@ export default async function PanelLayout({
             rol={o.rol}
             okunmamisMesaj={mesajSayisi?.count ?? 0}
             okunmamisSohbet={sohbetSayisi?.count ?? 0}
+            bekleyenTalep={talepSayisi?.count ?? 0}
             // Admin alan adında "/" panele yönlendiği için vitrin bağlantısı ana sitenin tam adresiyle verilir.
             siteAdresi={process.env.SITE_URL ?? "/"}
         >

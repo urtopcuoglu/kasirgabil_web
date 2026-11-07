@@ -6,6 +6,8 @@ import { NextResponse, type NextRequest } from "next/server";
 const GIRIS_YOLU = "/admin/giris";
 const HESAP_YOLU = "/admin/hesabim";
 const DOGRULA_YOLU = "/admin/dogrula";
+// Oturum açmadan görülen sayfalar; giriş yapmış kullanıcı bunlardan panele yönlendirilir.
+const ACIK_YOLLAR = new Set([GIRIS_YOLU, "/admin/kayit", "/admin/sifremi-unuttum"]);
 
 export async function updateSession(request: NextRequest) {
     let response = NextResponse.next({ request });
@@ -38,23 +40,23 @@ export async function updateSession(request: NextRequest) {
     const girisYapmis = Boolean(data?.claims);
 
     const { pathname } = request.nextUrl;
-    const girisSayfasi = pathname === GIRIS_YOLU;
+    const acikSayfa = ACIK_YOLLAR.has(pathname);
 
-    if (!girisYapmis && !girisSayfasi) {
+    if (!girisYapmis && !acikSayfa) {
         const url = request.nextUrl.clone();
         url.pathname = GIRIS_YOLU;
         url.search = "";
         return yonlendir(url, response);
     }
 
-    if (girisYapmis && girisSayfasi) {
+    if (girisYapmis && acikSayfa) {
         const url = request.nextUrl.clone();
         url.pathname = "/admin";
         url.search = "";
         return yonlendir(url, response);
     }
 
-    // Giriş yapmamış kullanıcı buraya yalnızca giriş sayfası için gelir.
+    // Giriş yapmamış kullanıcı buraya yalnızca açık sayfalar (giriş, kayıt talebi, şifremi unuttum) için gelir.
     if (!girisYapmis) return response;
 
     // İki adımlı doğrulama tüm personel için zorunludur: oturum aal2 olana kadar (uygulama kurulumu ya da kod girişi)
