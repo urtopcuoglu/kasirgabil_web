@@ -61,6 +61,8 @@ export default async function PanelLayout({
             rol={o.rol}
             okunmamisMesaj={mesajSayisi?.count ?? 0}
             okunmamisSohbet={sohbetSayisi?.count ?? 0}
+            // Admin alan adında "/" panele yönlendiği için vitrin bağlantısı ana sitenin tam adresiyle verilir.
+            siteAdresi={process.env.SITE_URL ?? "/"}
         >
             {children}
         </AdminKabuk>

@@ -19,10 +19,11 @@ type Props = {
     rol: Rol | null;
     okunmamisMesaj?: number;
     okunmamisSohbet?: number;
+    siteAdresi: string; // vitrin ana sayfası (SITE_URL; yerelde "/")
     children: React.ReactNode;
 };
 
-export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmamisSohbet = 0, children }: Props) {
+export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmamisSohbet = 0, siteAdresi, children }: Props) {
     const pathname = usePathname();
     const [menuAcik, setMenuAcik] = useState(false);
     const sohbetSayisi = useSohbetBildirimi(izinVar(rol, "sohbet"), okunmamisSohbet);
@@ -98,14 +99,15 @@ export default function AdminKabuk({ email, ad, rol, okunmamisMesaj = 0, okunmam
                 </nav>
 
                 <div className="space-y-1 border-t border-white/10 px-3 py-4">
-                    <Link
-                        href="/"
+                    <a
+                        href={siteAdresi}
                         target="_blank"
+                        rel="noopener"
                         className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/80 hover:bg-white/10 hover:text-white"
                     >
                         <ExternalLink className="size-4" />
                         Siteyi Görüntüle
-                    </Link>
+                    </a>
                     <Link
                         href="/admin/hesabim"
                         className={cn(
