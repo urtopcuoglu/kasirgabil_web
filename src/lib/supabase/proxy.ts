@@ -54,6 +54,9 @@ export async function updateSession(request: NextRequest) {
         return yonlendir(url, response);
     }
 
+    // Giriş yapmamış kullanıcı buraya yalnızca giriş sayfası için gelir.
+    if (!girisYapmis) return response;
+
     // İki adımlı doğrulama tüm personel için zorunludur: oturum aal2 olana kadar (uygulama kurulumu ya da kod girişi)
     // yalnızca doğrulama sayfası açılır. "aal" imzalı JWT'dedir. Asıl engel veritabanındaki RLS politikalarıdır (mfa_zorunlu).
     const kodGerekli = data?.claims?.aal !== "aal2";
